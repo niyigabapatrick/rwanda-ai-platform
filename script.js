@@ -247,78 +247,155 @@ RWANDA AI KNOWLEDGE BASE
 =========================
 */
 
+function
+normalizeText(text){
+  
+return text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+
+}
+
+
+function
+calculateScore(userQuestion, data){
+  
+const question = normalizeText(userQuestion);
+
+const savedQuestion = normalizeText(data.question || " ");
+
+const keywords = normalizeText(data.keywords || " ");
+
+const userWords = question.split(" ").filter(word =>word.length > 2);
+
+let score = 0;
+
+
+userWords.forEach(function(word){
+  
+  
+ if(savedQuestion.includes(word)){score +=3;}
+ 
+ 
+ if(keywords.includes(word)){score += 5;}
+ 
+ });
+ 
+ return score;
+ 
+}
+
 
 const askBtn = document.getElementById("askBtn");
 
 if(askBtn){
   
-  askBtn.addEventListener("click",async function(){
-    
-    
-    
-    const question = document.getElementById("question").value.toLowerCase().trim();
-    
-    
-    const answerBox = document.getElementById("answer");
-    
-    
-    if(!question){
-      
-      answerBox.innerHTML ="<p>Please ask a question</p>";
-      
-      
-      return;
-      
-    }
-    
-    
-    let answer = "nta makuru mfite kuri icyo kibazo ubu.";
-    
-    
-    try{
-      
-      
-      const snapshot = await getDocs(collection(db,"knowledge")
-      );
-      
-      
-      snapshot.forEach(function(doc){
-        
-        const data = doc.data();
-        
-        
-        const savedQuestion = data.question? data.question.toLowerCase().trim():"";
-        
-        
-        if(savedQuestion &&(question.includes(savedQuestion) 
-          || 
-          savedQuestion.includes(question)
-          )
-          
-          ){
-            
-          answer = data.answer;
-          
-          }
-          
-      });
-      
-      
-      answerBox.innerHTML ="<p>"+answer+"</p>";
-      
-      
-    }catch(error){
-      
-      console.log("AI error:",error);
-      
-      answerBox.innerHTML = "<p>Habaye ikibazo icyibazo cyo gushaka igisubizo.</p>";
-      
-    }
-    
-    
-  });
+askBtn.addEventListener("click", async function(){
   
-}
+  const question = document.getElementById("question").value.trim();
+  
+  const answerBox = document.getElementById("answer");
+  
+  if(!question){answerBox.innerHTML = "<p>Please ask a question</p>";
+  
+  return;
+  
+  }
+  
+  try{
+    
+    const snapshot = await getDocs(collection(db,"knowledge"));
+    
+    console.log("knowledge size:", snapshot.size);
+    
+    let bestAnswer = " ";
+    
+    let bestScore = 0;
+    
+    snapshot.forEach(function(doc){
+      
+      const data = doc.data();
+      
+      const score = calculateScore(question,data);
+      
+      
+      console.log("knowkedge:",data.question,"Score:",score);
+      
+      
+      if(score > bestScore){
+        
+        bestScore = score;
+        
+        bestAnswer = data.answer || " ";
+        
+      }
+      
+    });
+    
+    if(bestScore > 0 && bestAnswer){
+      
+      
+      answerBox.innerHTML = "<p>" + bestAnswer + "</p>";
+      
+      }else{
+        
+        
+        answerBox.innerHTML = "<p>Nta makuru mfite kuri icyo kibazo ubu.</p>";
+        
+      }
+      
+      
+      }catch(error){
+        
+        console.log("AI error:",error);
+        
+        answerBox.innerHTML = "<p>Habaye ikibazo cyo gushaka igisubizo.</p>";
+        
+      }
+      
+    });
+    
+  }
+      
+      
+      
+        
+        
+        
+      
+      
+      
+      
+      
+      
+      
+    
+        
+        
+      
+      
+        
+      
+   
+      
+    
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+  
+
+
+
+  
+
+            
+
     
             
             
