@@ -1,6 +1,7 @@
 /*
 ========================================
-RWANDA AI PLATFORM MAIN SCRIPT
+RWANDA AI PLATFORM
+MAIN SCRIPT
 ========================================
 */
 
@@ -23,8 +24,14 @@ GEMINI GOOGLE APPS SCRIPT WEB APP
 */
 
 const GEMINI_URL =
-  "https://script.google.com/macros/s/AKfycbyTAmEzsx0IXCVm7TwrDwO0K30gi7fCquiIwXHNvTWlZwhSKdw0db2v5FuhrPeoK3qF/exec";
+  "https://script.google.com/macros/s/AKfycbxAN1wRcB_DxLJgO8mqpriww6WagJKQasgUMgvDFeV4fVsMf9Jx2VOXierjm540JVzlKQ/exec";
 
+
+/*
+========================================
+PROVIDERS
+========================================
+*/
 
 let providers = [];
 
@@ -44,21 +51,28 @@ async function loadProviders() {
         collection(db, "providers")
       );
 
+
     providers = [];
+
 
     snapshot.forEach(function(doc) {
 
       providers.push({
+
         id: doc.id,
+
         ...doc.data()
+
       });
 
     });
+
 
     console.log(
       "Providers loaded:",
       providers
     );
+
 
   } catch (error) {
 
@@ -71,6 +85,7 @@ async function loadProviders() {
 
 }
 
+
 loadProviders();
 
 
@@ -81,7 +96,9 @@ SERVICE SEARCH
 */
 
 const searchBtn =
-  document.getElementById("searchBtn");
+  document.getElementById(
+    "searchBtn"
+  );
 
 
 if (searchBtn) {
@@ -91,13 +108,21 @@ if (searchBtn) {
     function() {
 
       const searchInput =
-        document.getElementById("searchInput");
+        document.getElementById(
+          "searchInput"
+        );
+
 
       const resultBox =
-        document.getElementById("result");
+        document.getElementById(
+          "result"
+        );
 
 
-      if (!searchInput || !resultBox) {
+      if (
+        !searchInput ||
+        !resultBox
+      ) {
 
         console.error(
           "Search elements not found."
@@ -125,90 +150,98 @@ if (searchBtn) {
 
 
       const result =
-        providers.filter(function(item) {
+        providers.filter(
+          function(item) {
 
-          return (
+            return (
 
-            (
-              item.service &&
-              String(item.service)
-                .toLowerCase()
-                .includes(searchValue)
-            )
+              (
+                item.service &&
+                String(item.service)
+                  .toLowerCase()
+                  .includes(searchValue)
+              )
 
-            ||
+              ||
 
-            (
-              item.category &&
-              String(item.category)
-                .toLowerCase()
-                .includes(searchValue)
-            )
+              (
+                item.category &&
+                String(item.category)
+                  .toLowerCase()
+                  .includes(searchValue)
+              )
 
-            ||
+              ||
 
-            (
-              item.location &&
-              String(item.location)
-                .toLowerCase()
-                .includes(searchValue)
-            )
+              (
+                item.location &&
+                String(item.location)
+                  .toLowerCase()
+                  .includes(searchValue)
+              )
 
-            ||
+              ||
 
-            (
-              item.name &&
-              String(item.name)
-                .toLowerCase()
-                .includes(searchValue)
-            )
+              (
+                item.name &&
+                String(item.name)
+                  .toLowerCase()
+                  .includes(searchValue)
+              )
 
-          );
+            );
 
-        });
+          }
+        );
 
 
-      if (result.length > 0) {
+      if (
+        result.length > 0
+      ) {
 
         resultBox.innerHTML =
-          result.map(function(item) {
+          result.map(
+            function(item) {
 
-            return `
+              return `
 
-              <div class="card">
+                <div class="card">
 
-                <h3>${escapeHTML(item.name || "")}</h3>
+                  <h3>
+                    ${escapeHTML(item.name || "")}
+                  </h3>
 
-                <p>
-                  Service:
-                  ${escapeHTML(item.service || "")}
-                </p>
+                  <p>
+                    Service:
+                    ${escapeHTML(item.service || "")}
+                  </p>
 
-                <p>
-                  Price:
-                  ${escapeHTML(item.price || "")}
-                </p>
+                  <p>
+                    Price:
+                    ${escapeHTML(item.price || "")}
+                  </p>
 
-                <p>
-                  Category:
-                  ${escapeHTML(item.category || "")}
-                </p>
+                  <p>
+                    Category:
+                    ${escapeHTML(item.category || "")}
+                  </p>
 
-                <p>
-                  Location:
-                  ${escapeHTML(item.location || "")}
-                </p>
+                  <p>
+                    Location:
+                    ${escapeHTML(item.location || "")}
+                  </p>
 
-                <p>
-                  Phone:
-                  ${escapeHTML(item.phone || "")}
-                </p>
+                  <p>
+                    Phone:
+                    ${escapeHTML(item.phone || "")}
+                  </p>
 
-              </div>
+                </div>
 
-            `;
+              `;
 
-          }).join("");
+            }
+          ).join("");
 
 
       } else {
@@ -231,7 +264,9 @@ REGISTER PROVIDER
 */
 
 const registerBtn =
-  document.getElementById("registerBtn");
+  document.getElementById(
+    "registerBtn"
+  );
 
 
 if (registerBtn) {
@@ -241,25 +276,45 @@ if (registerBtn) {
     async function() {
 
       const nameElement =
-        document.getElementById("name");
+        document.getElementById(
+          "name"
+        );
+
 
       const serviceElement =
-        document.getElementById("service");
+        document.getElementById(
+          "service"
+        );
+
 
       const priceElement =
-        document.getElementById("price");
+        document.getElementById(
+          "price"
+        );
+
 
       const categoryElement =
-        document.getElementById("category");
+        document.getElementById(
+          "category"
+        );
+
 
       const locationElement =
-        document.getElementById("location");
+        document.getElementById(
+          "location"
+        );
+
 
       const phoneElement =
-        document.getElementById("phone");
+        document.getElementById(
+          "phone"
+        );
+
 
       const message =
-        document.getElementById("message");
+        document.getElementById(
+          "message"
+        );
 
 
       if (
@@ -284,17 +339,22 @@ if (registerBtn) {
       const name =
         nameElement.value.trim();
 
+
       const service =
         serviceElement.value.trim();
+
 
       const price =
         priceElement.value.trim();
 
+
       const category =
         categoryElement.value.trim();
 
+
       const location =
         locationElement.value.trim();
+
 
       const phone =
         phoneElement.value.trim();
@@ -320,22 +380,32 @@ if (registerBtn) {
       try {
 
         await addDoc(
-          collection(db, "providers"),
+          collection(
+            db,
+            "providers"
+          ),
           {
 
-            name: name,
+            name:
+              name,
 
-            service: service,
+            service:
+              service,
 
-            price: price,
+            price:
+              price,
 
-            category: category,
+            category:
+              category,
 
-            location: location,
+            location:
+              location,
 
-            phone: phone,
+            phone:
+              phone,
 
-            createdAt: new Date()
+            createdAt:
+              new Date()
 
           }
         );
@@ -345,12 +415,23 @@ if (registerBtn) {
           "Registration Successfully";
 
 
-        nameElement.value = "";
-        serviceElement.value = "";
-        priceElement.value = "";
-        categoryElement.value = "";
-        locationElement.value = "";
-        phoneElement.value = "";
+        nameElement.value =
+          "";
+
+        serviceElement.value =
+          "";
+
+        priceElement.value =
+          "";
+
+        categoryElement.value =
+          "";
+
+        locationElement.value =
+          "";
+
+        phoneElement.value =
+          "";
 
 
         await loadProviders();
@@ -365,7 +446,9 @@ if (registerBtn) {
 
 
         message.innerHTML =
-          error.message;
+          escapeHTML(
+            error.message
+          );
 
       }
 
@@ -384,9 +467,19 @@ TEXT NORMALIZATION
 function normalizeText(text) {
 
   return String(text || "")
+
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
+
+    .replace(
+      /[^\p{L}\p{N}\s]/gu,
+      " "
+    )
+
+    .replace(
+      /\s+/g,
+      " "
+    )
+
     .trim();
 
 }
@@ -404,12 +497,16 @@ function calculateScore(
 ) {
 
   const question =
-    normalizeText(userQuestion);
+    normalizeText(
+      userQuestion
+    );
+
 
   const savedQuestion =
     normalizeText(
       data.question
     );
+
 
   const keywords =
     normalizeText(
@@ -420,36 +517,41 @@ function calculateScore(
   const userWords =
     question
       .split(" ")
-      .filter(function(word) {
+      .filter(
+        function(word) {
 
-        return word.length > 2;
+          return word.length > 2;
 
-      });
-
-
-  let score = 0;
+        }
+      );
 
 
-  userWords.forEach(function(word) {
+  let score =
+    0;
 
-    if (
-      savedQuestion.includes(word)
-    ) {
 
-      score += 3;
+  userWords.forEach(
+    function(word) {
+
+      if (
+        savedQuestion.includes(word)
+      ) {
+
+        score += 3;
+
+      }
+
+
+      if (
+        keywords.includes(word)
+      ) {
+
+        score += 5;
+
+      }
 
     }
-
-
-    if (
-      keywords.includes(word)
-    ) {
-
-      score += 5;
-
-    }
-
-  });
+  );
 
 
   return score;
@@ -459,348 +561,14 @@ function calculateScore(
 
 /*
 ========================================
-MAIN AI FUNCTION
-========================================
-*/
-
-async function askRwandaAI(
-  question,
-  answerBox
-) {
-
-  /*
-  ========================================
-  LOADING
-  ========================================
-  */
-
-  answerBox.innerHTML =
-    "<p>Ndimo gushaka igisubizo...</p>";
-
-
-  try {
-
-    /*
-    ========================================
-    STEP 1
-    FIRESTORE KNOWLEDGE BASE
-    ========================================
-    */
-
-    console.log(
-      "Searching Firestore Knowledge Base..."
-    );
-
-
-    const snapshot =
-      await getDocs(
-        collection(db, "knowledge")
-      );
-
-
-    console.log(
-      "Knowledge documents:",
-      snapshot.size
-    );
-
-
-    let bestAnswer = "";
-
-    let bestScore = 0;
-
-
-    snapshot.forEach(function(doc) {
-
-      const data =
-        doc.data();
-
-
-      const score =
-        calculateScore(
-          question,
-          data
-        );
-
-
-      console.log(
-        "Knowledge:",
-        data.question,
-        "Score:",
-        score
-      );
-
-
-      if (
-        score > bestScore
-      ) {
-
-        bestScore =
-          score;
-
-        bestAnswer =
-          String(
-            data.answer || ""
-          );
-
-      }
-
-    });
-
-
-    /*
-    ========================================
-    STEP 2
-    KNOWLEDGE BASE ANSWER
-    ========================================
-    */
-
-    if (
-      bestScore >= 3 &&
-      bestAnswer
-    ) {
-
-      console.log(
-        "Answer found in Knowledge Base."
-      );
-
-
-      answerBox.innerHTML =
-        "<p>" +
-        escapeHTML(bestAnswer) +
-        "</p>";
-
-
-      speakAnswer(bestAnswer);
-
-      return;
-
-    }
-
-
-    /*
-    ========================================
-    STEP 3
-    GEMINI FALLBACK
-    ========================================
-    */
-
-    console.log(
-      "No suitable Knowledge Base answer."
-    );
-
-    console.log(
-      "Sending question to Gemini..."
-    );
-
-
-    const requestBody = {
-
-      question:
-        question,
-
-      systemInstruction:
-        "You are Rwanda AI Assistant. Answer clearly, accurately and helpfully. When the question is about Rwanda, prioritize Rwanda-specific information. Respond in the same language used by the user."
-
-    };
-
-
-    const response =
-      await fetch(
-        GEMINI_URL,
-        {
-
-          method:
-            "POST",
-
-          headers: {
-
-            "Content-Type":
-              "text/plain;charset=utf-8"
-
-          },
-
-          body:
-            JSON.stringify(
-              requestBody
-            )
-
-        }
-      );
-
-
-    console.log(
-      "Gemini HTTP status:",
-      response.status
-    );
-
-
-    const responseText =
-      await response.text();
-
-
-    console.log(
-      "Gemini raw response:",
-      responseText
-    );
-
-
-    /*
-    ========================================
-    PARSE JSON
-    ========================================
-    */
-
-    let result;
-
-
-    try {
-
-      result =
-        JSON.parse(
-          responseText
-        );
-
-    } catch (jsonError) {
-
-      console.error(
-        "Gemini returned invalid JSON:",
-        jsonError
-      );
-
-
-      answerBox.innerHTML =
-        "<p>Gemini yagarutse n'igisubizo kitari JSON. Reba Console.</p>";
-
-      return;
-
-    }
-
-
-    /*
-    ========================================
-    GEMINI ERROR
-    ========================================
-    */
-
-    if (
-      result.error
-    ) {
-
-      console.error(
-        "Gemini server error:",
-        result
-      );
-
-
-      let errorMessage =
-        "Gemini yanze gusubiza.";
-
-
-      if (
-        result.details
-      ) {
-
-        errorMessage +=
-          " " +
-          JSON.stringify(
-            result.details
-          );
-
-      }
-
-
-      answerBox.innerHTML =
-        "<p>" +
-        escapeHTML(
-          errorMessage
-        ) +
-        "</p>";
-
-
-      return;
-
-    }
-
-
-    /*
-    ========================================
-    GET ANSWER
-    ========================================
-    */
-
-    const geminiAnswer =
-      result.answer ||
-      result.response ||
-      result.text ||
-      "";
-
-
-    /*
-    ========================================
-    DISPLAY GEMINI ANSWER
-    ========================================
-    */
-
-    if (
-      geminiAnswer
-    ) {
-
-      console.log(
-        "Gemini answer received."
-      );
-
-
-      answerBox.innerHTML =
-        "<p>" +
-        escapeHTML(
-          String(geminiAnswer)
-        ) +
-        "</p>";
-
-
-      speakAnswer(
-        String(geminiAnswer)
-      );
-
-
-    } else {
-
-      console.error(
-        "Gemini returned no answer:",
-        result
-      );
-
-
-      answerBox.innerHTML =
-        "<p>Gemini ntiyagaruye igisubizo.</p>";
-
-    }
-
-
-  } catch (error) {
-
-    console.error(
-      "AI connection error:",
-      error
-    );
-
-
-    answerBox.innerHTML =
-      "<p>Habaye ikibazo cyo kuvugana na AI. Reba Console.</p>";
-
-  }
-
-}
-
-
-/*
-========================================
-NORMAL AI ASSISTANT BUTTON
+ASK AI
 ========================================
 */
 
 const askBtn =
-  document.getElementById("askBtn");
+  document.getElementById(
+    "askBtn"
+  );
 
 
 if (askBtn) {
@@ -810,10 +578,15 @@ if (askBtn) {
     async function() {
 
       const questionInput =
-        document.getElementById("question");
+        document.getElementById(
+          "question"
+        );
+
 
       const answerBox =
-        document.getElementById("answer");
+        document.getElementById(
+          "answer"
+        );
 
 
       if (
@@ -844,219 +617,370 @@ if (askBtn) {
       }
 
 
-      await askRwandaAI(
-        question,
-        answerBox
-      );
+      /*
+      ========================================
+      LOADING
+      ========================================
+      */
 
-    }
-  );
-
-}
-
-
-/*
-========================================
-VOICE → AI
-READ QUESTION FROM URL
-========================================
-*/
-
-const urlParams =
-  new URLSearchParams(
-    window.location.search
-  );
+      answerBox.innerHTML =
+        "<p>Ndimo gushaka igisubizo...</p>";
 
 
-const voiceQuestion =
-  urlParams.get(
-    "question"
-  );
+      try {
+
+        /*
+        ========================================
+        STEP 1
+        FIRESTORE KNOWLEDGE BASE
+        ========================================
+        */
+
+        console.log(
+          "Searching Firestore Knowledge Base..."
+        );
 
 
-if (
-  voiceQuestion
-) {
-
-  const questionInput =
-    document.getElementById(
-      "question"
-    );
-
-  const answerBox =
-    document.getElementById(
-      "answer"
-    );
+        const snapshot =
+          await getDocs(
+            collection(
+              db,
+              "knowledge"
+            )
+          );
 
 
-  if (
-    questionInput &&
-    answerBox
-  ) {
-
-    console.log(
-      "Voice question received:",
-      voiceQuestion
-    );
+        console.log(
+          "Knowledge documents:",
+          snapshot.size
+        );
 
 
-    questionInput.value =
-      voiceQuestion;
+        let bestAnswer =
+          "";
 
 
-    /*
-    ========================================
-    AUTO ASK AI
-    ========================================
-    */
-
-    askRwandaAI(
-      voiceQuestion,
-      answerBox
-    );
-
-  }
-
-}
+        let bestScore =
+          0;
 
 
-/*
-========================================
-AI VOICE OUTPUT
-========================================
-*/
+        snapshot.forEach(
+          function(doc) {
 
-function speakAnswer(text) {
-
-  if (
-    !("speechSynthesis" in window)
-  ) {
-
-    console.log(
-      "Speech synthesis is not supported."
-    );
-
-    return;
-
-  }
+            const data =
+              doc.data();
 
 
-  try {
-
-    window.speechSynthesis.cancel();
-
-
-    const speech =
-      new SpeechSynthesisUtterance(
-        String(text)
-      );
+            const score =
+              calculateScore(
+                question,
+                data
+              );
 
 
-    speech.lang =
-      detectSpeechLanguage(
-        text
-      );
+            console.log(
+              "Knowledge:",
+              data.question,
+              "Score:",
+              score
+            );
 
 
-    speech.rate =
-      0.95;
+            if (
+              score > bestScore
+            ) {
+
+              bestScore =
+                score;
 
 
-    speech.pitch =
-      1;
+              bestAnswer =
+                String(
+                  data.answer || ""
+                );
+
+            }
+
+          }
+        );
 
 
-    window.speechSynthesis.speak(
-      speech
-    );
+        /*
+        ========================================
+        STEP 2
+        KNOWLEDGE BASE ANSWER
+        ========================================
+        */
+
+        if (
+          bestScore >= 3 &&
+          bestAnswer
+        ) {
+
+          console.log(
+            "Answer found in Knowledge Base."
+          );
 
 
-  } catch (error) {
-
-    console.error(
-      "Speech synthesis error:",
-      error
-    );
-
-  }
-
-}
+          answerBox.innerHTML =
+            "<p>" +
+            escapeHTML(
+              bestAnswer
+            ) +
+            "</p>";
 
 
-/*
-========================================
-LANGUAGE DETECTION
-========================================
-*/
+          return;
 
-function detectSpeechLanguage(text) {
-
-  const value =
-    String(text || "")
-      .toLowerCase();
+        }
 
 
-  /*
-  KINYARWANDA
-  */
+        /*
+        ========================================
+        STEP 3
+        GEMINI FALLBACK
+        ========================================
+        */
 
-  const kinyarwandaWords = [
-
-    "ni",
-    "iki",
-    "iki?",
-    "ese",
-    "muri",
-    "rwanda",
-    "umuntu",
-    "abantu",
-    "amakuru",
-    "ndashaka",
-    "wabigenza",
-    "gute",
-    "iki",
-    "nde",
-    "hehe",
-    "ryari"
-
-  ];
+        console.log(
+          "Question not found in Knowledge Base."
+        );
 
 
-  let kinyarwandaScore =
-    0;
+        console.log(
+          "Sending question to Gemini..."
+        );
 
 
-  kinyarwandaWords.forEach(
-    function(word) {
+        const requestBody = {
 
-      if (
-        value.includes(
-          word
-        )
-      ) {
+          question:
+            question,
 
-        kinyarwandaScore++;
+          systemInstruction:
+            "You are Rwanda AI Assistant. Answer clearly, accurately and helpfully. When the question is about Rwanda, prioritize Rwanda-specific information. Respond in the same language used by the user."
+
+        };
+
+
+        /*
+        ========================================
+        CALL GEMINI PROXY
+        ========================================
+        */
+
+        const response =
+          await fetch(
+            GEMINI_URL,
+            {
+
+              method:
+                "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "text/plain;charset=utf-8"
+
+              },
+
+              body:
+                JSON.stringify(
+                  requestBody
+                )
+
+            }
+          );
+
+
+        console.log(
+          "Gemini HTTP status:",
+          response.status
+        );
+
+
+        /*
+        ========================================
+        READ RESPONSE
+        ========================================
+        */
+
+        const responseText =
+          await response.text();
+
+
+        console.log(
+          "Gemini raw response:",
+          responseText
+        );
+
+
+        /*
+        ========================================
+        PARSE RESPONSE
+        ========================================
+        */
+
+        let result;
+
+
+        try {
+
+          result =
+            JSON.parse(
+              responseText
+            );
+
+        } catch (jsonError) {
+
+          console.error(
+            "Invalid Gemini JSON:",
+            jsonError
+          );
+
+
+          answerBox.innerHTML =
+            "<p>Gemini yagarutse n'igisubizo kitari JSON.</p>";
+
+          return;
+
+        }
+
+
+        /*
+        ========================================
+        GEMINI ERROR
+        ========================================
+        */
+
+        if (
+          result.error
+        ) {
+
+          console.error(
+            "Gemini error:",
+            result
+          );
+
+
+          let errorMessage =
+            "Gemini ntiyashoboye gutanga igisubizo.";
+
+
+          if (
+            result.message
+          ) {
+
+            errorMessage +=
+              " " +
+              result.message;
+
+          }
+
+
+          if (
+            result.status
+          ) {
+
+            errorMessage +=
+              " HTTP " +
+              result.status;
+
+          }
+
+
+          answerBox.innerHTML =
+            "<p>" +
+            escapeHTML(
+              errorMessage
+            ) +
+            "</p>";
+
+
+          return;
+
+        }
+
+
+        /*
+        ========================================
+        GET GEMINI ANSWER
+        ========================================
+        */
+
+        const geminiAnswer =
+          result.answer ||
+          result.response ||
+          result.text ||
+          "";
+
+
+        /*
+        ========================================
+        DISPLAY GEMINI ANSWER
+        ========================================
+        */
+
+        if (
+          geminiAnswer
+        ) {
+
+          console.log(
+            "Gemini answer received."
+          );
+
+
+          if (
+            result.model
+          ) {
+
+            console.log(
+              "Gemini model used:",
+              result.model
+            );
+
+          }
+
+
+          answerBox.innerHTML =
+            "<p>" +
+            escapeHTML(
+              String(
+                geminiAnswer
+              )
+            ) +
+            "</p>";
+
+
+        } else {
+
+          console.error(
+            "Gemini returned no answer:",
+            result
+          );
+
+
+          answerBox.innerHTML =
+            "<p>Gemini ntiyagaruye igisubizo.</p>";
+
+        }
+
+
+      } catch (error) {
+
+        console.error(
+          "AI connection error:",
+          error
+        );
+
+
+        answerBox.innerHTML =
+          "<p>Habaye ikibazo cyo kuvugana na Rwanda AI API. Reba Console.</p>";
 
       }
 
     }
   );
-
-
-  if (
-    kinyarwandaScore >= 2
-  ) {
-
-    return "rw-RW";
-
-  }
-
-
-  /*
-  DEFAULT
-  */
-
-  return "en-US";
 
 }
 
@@ -1070,23 +994,30 @@ ESCAPE HTML
 
 function escapeHTML(text) {
 
-  return String(text || "")
+  return String(
+    text || ""
+  )
+
     .replace(
       /&/g,
       "&amp;"
     )
+
     .replace(
       /</g,
       "&lt;"
     )
+
     .replace(
       />/g,
       "&gt;"
     )
+
     .replace(
       /"/g,
       "&quot;"
     )
+
     .replace(
       /'/g,
       "&#039;"
