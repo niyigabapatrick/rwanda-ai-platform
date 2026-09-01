@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Voice AI - Rwanda AI Platform</title><link rel="stylesheet"
+href="style.css"><style>
+
+.voice-container {
+
+  width: 92%;
+  max-width: 700px;
+  margin: 30px auto;
+
+}
+
+.voice-card {
+
+  background: #f5f5f5;
+
+  padding: 25px;
+
+  border-radius: 12px;
+
+  text-align: center;
+
+}
+
+#voiceQuestion {
+
+  min-height: 80px;
+
+}
+
+#voiceStatus {
+
+  margin-top: 15px;
+
+  font-weight: bold;
+
+}
+
+</style></head><body><header><h1>🎙️ Rwanda Voice AI</h1><p>
+Speak your question
+</p></header><nav><a href="index.html">Home</a>
+
+<a href="ai.html">AI Assistant</a>
+
+<a href="ai-tools.html">AI Tools</a>
+
+<a href="finder.html">Finder</a>
+
+</nav><section class="hero"><h2>
+Voice Question
+</h2><p>
+Tap the microphone and speak.
+</p></section><main class="voice-container"><section class="voice-card"><button id="startVoice">🎙️ Start Speaking
+
+</button><p id="voiceStatus">
+Voice system ready.
+</p><input
+id="voiceQuestion"
+type="text"
+placeholder="Your spoken question will appear here">
+
+<button id="sendVoiceQuestion">Ask Rwanda AI
+
+</button><div id="voiceAnswer"><p>
+Answer will appear here.
+</p></div></section></main><footer><p>
+© 2026 Rwanda AI Platform
+</p></footer><script
+type="module"
+src="ai-voice.js">
+</script></body></html>
