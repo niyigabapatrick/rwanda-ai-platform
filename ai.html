@@ -2,98 +2,367 @@
 <html lang="en">
 
 <head>
-  
+
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width,initial-scale=1.0">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
 <title>Rwanda AI Assistant</title>
 
-<link rel="stylesheet"
-href="style.css">
+<link
+  rel="stylesheet"
+  href="style.css"
+>
+
+<style>
+
+/* =========================
+   AI CONTAINER
+========================= */
+
+.ai-container {
+  width: 92%;
+  max-width: 800px;
+  margin: 30px auto;
+}
+
+.ai-panel {
+  background: #f5f5f5;
+  padding: 25px;
+  border-radius: 15px;
+}
+
+.ai-panel h2 {
+  color: #00A1DE;
+}
+
+
+/* =========================
+   QUESTION INPUT
+========================= */
+
+#question {
+  display: block !important;
+
+  width: 100% !important;
+
+  box-sizing: border-box !important;
+
+  padding: 14px !important;
+
+  margin: 15px 0 10px 0 !important;
+
+  border: 2px solid #222 !important;
+
+  border-radius: 10px !important;
+
+  font-size: 18px !important;
+
+  background: white !important;
+
+  color: #222 !important;
+}
+
+
+/* =========================
+   ASK AI BUTTON
+========================= */
+
+#askBtn {
+
+  display: block !important;
+
+  visibility: visible !important;
+
+  opacity: 1 !important;
+
+  position: relative !important;
+
+  width: 100% !important;
+
+  min-height: 52px !important;
+
+  margin: 12px 0 20px 0 !important;
+
+  padding: 14px 20px !important;
+
+  background: #00A1DE !important;
+
+  color: white !important;
+
+  border: none !important;
+
+  border-radius: 10px !important;
+
+  font-size: 18px !important;
+
+  font-weight: bold !important;
+
+  cursor: pointer !important;
+
+  z-index: 9999 !important;
+
+  text-align: center !important;
+
+}
+
+
+/* BUTTON WHEN PRESSED */
+
+#askBtn:active {
+
+  transform: scale(0.98);
+
+}
+
+
+/* BUTTON WHEN DISABLED */
+
+#askBtn:disabled {
+
+  display: block !important;
+
+  visibility: visible !important;
+
+  opacity: 0.6 !important;
+
+  cursor: not-allowed !important;
+
+}
+
+
+/* =========================
+   ANSWER
+========================= */
+
+#answer {
+
+  display: block !important;
+
+  margin-top: 15px !important;
+
+  padding: 20px !important;
+
+  background: white !important;
+
+  border-radius: 10px !important;
+
+  min-height: 100px !important;
+
+  text-align: left !important;
+
+  line-height: 1.6 !important;
+
+  overflow-wrap: break-word !important;
+
+}
+
+
+/* =========================
+   AI ANSWER
+========================= */
+
+.ai-answer {
+
+  line-height: 1.7;
+
+  font-size: 16px;
+
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.ai-status {
+
+  margin-top: 15px;
+
+  font-size: 14px;
+
+  color: #666;
+
+}
+
+
+</style>
 
 </head>
 
-<body>
-  
-<header>
-  
-<h1>🤖 Rwanda AI Assistant</h1>
 
-<p>Your smart assistant built for Rwanda</p>
+<body>
+
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<header>
+
+<h1>
+🤖 Rwanda AI Assistant
+</h1>
+
+<p>
+Your smart assistant built for Rwanda
+</p>
 
 </header>
 
-<nav>
- 
-<a href="index.html">home</a>
- 
-<a href="ai.html">AI Assistant</a>
 
-<a href="register.html">Register Service</a>
+<!-- =========================
+     NAVIGATION
+========================= -->
+
+<nav>
+
+<a href="index.html">
+Home
+</a>
+
+<a href="ai.html">
+AI Assistant
+</a>
+
+<a href="register.html">
+Register Service
+</a>
 
 </nav>
 
 
+<!-- =========================
+     HERO
+========================= -->
+
 <section class="hero">
 
-<h2>Ask Rwanda AI</h2>
+<h2>
+Ask Rwanda AI
+</h2>
 
 <p>
-  
-Ask questions about Rwanda,culture,business and useful information.
-
+Ask questions about Rwanda,
+business, culture, education,
+technology and useful information.
 </p>
 
 </section>
-  
-  
-  
-<section class="form-container">
+
+
+<!-- =========================
+     AI CONTAINER
+========================= -->
+
+<main class="ai-container">
+
+<section class="ai-panel">
+
+
+<h2>
+🇷🇼 Rwanda AI
+</h2>
+
+
+<p>
+Type your question below:
+</p>
+
+
+<!-- =========================
+     QUESTION
+========================= -->
 
 <input
-id="question"
-type="text"
-placeholder="Ask AI Rwanda something...">
+  id="question"
+  type="text"
+  autocomplete="off"
+  placeholder="Ask Rwanda AI something..."
+>
 
 
-<button id="askBtn">
- 
-Ask AI
+<!-- =========================
+     ASK BUTTON
+========================= -->
 
+<button
+  id="askBtn"
+  type="button"
+>
+🤖 Ask AI
 </button>
 
 
-<div id="answer">
- 
-<p>
-  
-Your answer will appear here.
+<!-- =========================
+     ANSWER
+========================= -->
 
+<div id="answer">
+
+<p>
+Your answer will appear here.
 </p>
+
+</div>
+
+
+<!-- =========================
+     CONFIDENCE
+========================= -->
+
+<div id="aiConfidence">
+</div>
+
+
+<!-- =========================
+     SOURCE
+========================= -->
+
+<div id="aiSource">
+</div>
+
+
+<!-- =========================
+     STATUS
+========================= -->
+
+<div class="ai-status">
+
+Rwanda AI Gemini Engine
 
 </div>
 
 
 </section>
 
+</main>
 
+
+<!-- =========================
+     FOOTER
+========================= -->
 
 <footer>
 
 <p>
-  
 © 2026 Rwanda AI Platform
-
 </p>
 
 </footer>
 
 
+<!-- =========================
+     MAIN JAVASCRIPT
+========================= -->
 
-<script type="module"
-src="script.js"></script>
+<script
+  type="module"
+  src="script.js">
+</script>
 
 
 </body>
