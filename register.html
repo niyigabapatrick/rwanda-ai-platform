@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-  
+
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
 <title>Register Service - Rwanda AI Platform</title>
 
-<link rel="stylesheet"
-href="style.css">
+<link
+  rel="stylesheet"
+  href="style.css"
+>
 
 </head>
 
+
 <body>
-  
-  
+
+
 <header>
-  
+
 <h1>➕ Register Your Service</h1>
 
 <p>Join Rwanda AI Platform</p>
@@ -28,8 +33,8 @@ href="style.css">
 
 
 <nav>
-  
-<a href="index.html">home</a>
+
+<a href="index.html">Home</a>
 
 <a href="ai.html">AI Assistant</a>
 
@@ -38,47 +43,64 @@ href="style.css">
 </nav>
 
 
-
 <section class="form-container">
 
 <h2>Service Provider Registration</h2>
 
-
-<input
-id="name"
-type="text"
-placeholder="Business or Person name">
+<p>
+Register your business, service, product or supplier.
+</p>
 
 
 <input
-id="service"
-type="text"
-placeholder="Service or Product">
-
-<input
-id="price"
-type="text"
-placeholder="price (e.g.50,000 RWF)">
-
+  id="name"
+  type="text"
+  placeholder="Business or Person name"
+  autocomplete="organization"
+>
 
 
 <input
-id="category"
-type="text"
-placeholder="Category (Example: Supplier, Technician)">
+  id="service"
+  type="text"
+  placeholder="Service or Product"
+>
+
 
 <input
-id="location"
-type="text"
-placeholder="District or Location">
+  id="price"
+  type="text"
+  placeholder="Price (e.g. 50,000 RWF)"
+>
+
 
 <input
-id="phone"
-type="text"
-placeholder="Phone Number">
+  id="category"
+  type="text"
+  placeholder="Category (Example: Supplier, Technician)"
+>
 
-<button id="registerBtn">
-  
+
+<input
+  id="location"
+  type="text"
+  placeholder="District or Location"
+>
+
+
+<input
+  id="phone"
+  type="tel"
+  placeholder="Phone Number"
+  autocomplete="tel"
+>
+
+
+<button
+  id="registerBtn"
+  type="button"
+>
+
 Register
 
 </button>
@@ -90,21 +112,308 @@ Register
 </section>
 
 
-
-
 <footer>
-  
-<p>
-  
-© 2026 Rwanda AI Platform
 
+<p>
+© 2026 Rwanda AI Platform
 </p>
 
 </footer>
 
 
-<script type="module"
-src="script.js"></script>
+<script type="module">
+
+/*
+========================================
+FIREBASE FIRESTORE
+RWANDA AI PLATFORM
+========================================
+*/
+
+import {
+
+  collection,
+
+  addDoc,
+
+  serverTimestamp
+
+}
+
+from
+"https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+
+
+import {
+
+  db
+
+}
+
+from "./firebase.js";
+
+
+/*
+========================================
+ELEMENTS
+========================================
+*/
+
+const registerBtn =
+  document.getElementById("registerBtn");
+
+const message =
+  document.getElementById("message");
+
+
+/*
+========================================
+REGISTER SERVICE
+========================================
+*/
+
+registerBtn.addEventListener(
+  "click",
+  async function () {
+
+
+    /*
+    ================================
+    GET VALUES
+    ================================
+    */
+
+    const name =
+      document
+        .getElementById("name")
+        .value
+        .trim();
+
+
+    const service =
+      document
+        .getElementById("service")
+        .value
+        .trim();
+
+
+    const price =
+      document
+        .getElementById("price")
+        .value
+        .trim();
+
+
+    const category =
+      document
+        .getElementById("category")
+        .value
+        .trim();
+
+
+    const location =
+      document
+        .getElementById("location")
+        .value
+        .trim();
+
+
+    const phone =
+      document
+        .getElementById("phone")
+        .value
+        .trim();
+
+
+    /*
+    ================================
+    VALIDATION
+    ================================
+    */
+
+    if (
+      !name ||
+      !service ||
+      !category ||
+      !location ||
+      !phone
+    ) {
+
+      message.textContent =
+        "⚠️ Please fill in all required fields.";
+
+      message.style.color =
+        "red";
+
+      return;
+
+    }
+
+
+    /*
+    ================================
+    LOADING
+    ================================
+    */
+
+    registerBtn.disabled =
+      true;
+
+    registerBtn.textContent =
+      "⏳ Registering...";
+
+    message.textContent =
+      "";
+
+
+    /*
+    ================================
+    SAVE TO FIRESTORE
+    ================================
+    */
+
+    try {
+
+
+      const providerData = {
+
+        name: name,
+
+        service: service,
+
+        price: price,
+
+        category: category,
+
+        location: location,
+
+        phone: phone,
+
+        createdAt:
+          serverTimestamp()
+
+      };
+
+
+      const documentReference =
+        await addDoc(
+
+          collection(
+            db,
+            "providers"
+          ),
+
+          providerData
+
+        );
+
+
+      /*
+      ================================
+      SUCCESS
+      ================================
+      */
+
+      console.log(
+        "Provider registered with ID:",
+        documentReference.id
+      );
+
+
+      message.textContent =
+        "✅ Registration successful! Your service has been added.";
+
+      message.style.color =
+        "green";
+
+
+      /*
+      ================================
+      CLEAR FORM
+      ================================
+      */
+
+      document
+        .getElementById("name")
+        .value = "";
+
+
+      document
+        .getElementById("service")
+        .value = "";
+
+
+      document
+        .getElementById("price")
+        .value = "";
+
+
+      document
+        .getElementById("category")
+        .value = "";
+
+
+      document
+        .getElementById("location")
+        .value = "";
+
+
+      document
+        .getElementById("phone")
+        .value = "";
+
+
+    }
+
+    catch (error) {
+
+
+      /*
+      ================================
+      ERROR
+      ================================
+      */
+
+      console.error(
+        "Firestore registration error:",
+        error
+      );
+
+
+      message.textContent =
+        "❌ Registration failed: " +
+        error.message;
+
+      message.style.color =
+        "red";
+
+
+    }
+
+    finally {
+
+
+      /*
+      ================================
+      RESTORE BUTTON
+      ================================
+      */
+
+      registerBtn.disabled =
+        false;
+
+      registerBtn.textContent =
+        "Register";
+
+
+    }
+
+  }
+
+);
+
+</script>
+
 
 </body>
 
