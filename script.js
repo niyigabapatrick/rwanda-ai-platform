@@ -53,6 +53,127 @@ const answerBox =
 
 /*
 ========================================
+CLEAN ANSWER
+REMOVE MARKDOWN SYMBOLS ONLY
+========================================
+*/
+
+function cleanAnswer(text) {
+
+  let value =
+    String(text || "");
+
+
+  /*
+  Remove code block markers
+  */
+
+  value =
+    value.replace(
+      /```/g,
+      ""
+    );
+
+
+  /*
+  Remove heading symbols
+  */
+
+  value =
+    value.replace(
+      /^#{1,6}\s*/gm,
+      ""
+    );
+
+
+  /*
+  Remove bold markers
+  */
+
+  value =
+    value.replace(
+      /\*\*/g,
+      ""
+    );
+
+
+  /*
+  Remove underline markers
+  */
+
+  value =
+    value.replace(
+      /__/g,
+      ""
+    );
+
+
+  /*
+  Remove bullet markers
+  */
+
+  value =
+    value.replace(
+      /^\s*[-*•]\s+/gm,
+      ""
+    );
+
+
+  /*
+  Remove markdown table lines
+  */
+
+  value =
+    value.replace(
+      /^\s*\|.*\|\s*$/gm,
+      ""
+    );
+
+
+  /*
+  Remove horizontal separator lines
+  */
+
+  value =
+    value.replace(
+      /^\s*[-_]{3,}\s*$/gm,
+      ""
+    );
+
+
+  /*
+  Remove blockquote marker
+  */
+
+  value =
+    value.replace(
+      /^\s*>\s?/gm,
+      ""
+    );
+
+
+  /*
+  Remove inline backticks
+  */
+
+  value =
+    value.replace(
+      /`/g,
+      ""
+    );
+
+
+  /*
+  Keep normal text and numbering
+  */
+
+  return value.trim();
+
+}
+
+
+/*
+========================================
 ESCAPE HTML
 ========================================
 */
@@ -61,15 +182,30 @@ function escapeHTML(text) {
 
   return String(text || "")
 
-    .replace(/&/g, "&amp;")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
 
-    .replace(/</g, "&lt;")
+    .replace(
+      /</g,
+      "&lt;"
+    )
 
-    .replace(/>/g, "&gt;")
+    .replace(
+      />/g,
+      "&gt;"
+    )
 
-    .replace(/"/g, "&quot;")
+    .replace(
+      /"/g,
+      "&quot;"
+    )
 
-    .replace(/'/g, "&#039;");
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
@@ -83,12 +219,18 @@ FORMAT ANSWER
 function formatAnswer(text) {
 
   return escapeHTML(
-    String(text || "").trim()
+    cleanAnswer(text)
   )
 
-    .replace(/\r\n/g, "\n")
+    .replace(
+      /\r\n/g,
+      "\n"
+    )
 
-    .replace(/\r/g, "\n")
+    .replace(
+      /\r/g,
+      "\n"
+    )
 
     .replace(
       /\n\n+/g,
@@ -471,7 +613,6 @@ async function searchKnowledge(
 
     /*
     ====================================
-    IMPORTANT:
     FIRESTORE ERROR DOES NOT STOP AI
     ====================================
     */
@@ -508,7 +649,15 @@ async function callGroq(
 
     "Be clear, intelligent and direct. " +
 
-    "Do not unnecessarily repeat the question.";
+    "Do not unnecessarily repeat the question. " +
+
+    "Do not use Markdown formatting. " +
+
+    "Do not use ##, ###, **, __, bullet symbols, tables, vertical bars, or horizontal separator lines. " +
+
+    "Use normal plain text. " +
+
+    "When listing information, use simple numbering such as 1. 2. 3.";
 
 
   let finalQuestion =
@@ -713,12 +862,6 @@ function findFemaleVoice() {
   }
 
 
-  /*
-  ======================================
-  FEMALE VOICE NAMES
-  ======================================
-  */
-
   const femaleNames = [
 
     "female",
@@ -733,12 +876,6 @@ function findFemaleVoice() {
 
   ];
 
-
-  /*
-  ======================================
-  FIND FEMALE VOICE
-  ======================================
-  */
 
   const femaleVoice =
     voices.find(
@@ -780,12 +917,6 @@ function detectSpeechLanguage(
     String(text || "")
       .toLowerCase();
 
-
-  /*
-  ======================================
-  COMMON KINYARWANDA WORDS
-  ======================================
-  */
 
   const kinyarwandaWords = [
 
@@ -875,7 +1006,7 @@ function speakAnswer(
 
 
   const cleanText =
-    String(text || "").trim();
+    cleanAnswer(text);
 
 
   if (!cleanText) {
@@ -885,20 +1016,8 @@ function speakAnswer(
   }
 
 
-  /*
-  ======================================
-  STOP PREVIOUS SPEECH
-  ======================================
-  */
-
   window.speechSynthesis.cancel();
 
-
-  /*
-  ======================================
-  CREATE SPEECH
-  ======================================
-  */
 
   const speech =
     new SpeechSynthesisUtterance(
@@ -906,53 +1025,23 @@ function speakAnswer(
     );
 
 
-  /*
-  ======================================
-  LANGUAGE
-  ======================================
-  */
-
   speech.lang =
     detectSpeechLanguage(
       cleanText
     );
 
 
-  /*
-  ======================================
-  VOICE SPEED
-  ======================================
-  */
-
   speech.rate =
     0.95;
 
-
-  /*
-  ======================================
-  PITCH
-  ======================================
-  */
 
   speech.pitch =
     1.05;
 
 
-  /*
-  ======================================
-  VOLUME
-  ======================================
-  */
-
   speech.volume =
     1;
 
-
-  /*
-  ======================================
-  FEMALE VOICE
-  ======================================
-  */
 
   const femaleVoice =
     findFemaleVoice();
@@ -967,12 +1056,6 @@ function speakAnswer(
 
   }
 
-
-  /*
-  ======================================
-  READ ANSWER
-  ======================================
-  */
 
   window.speechSynthesis.speak(
     speech
@@ -1017,12 +1100,6 @@ function speakAnswerWhenReady(
   }
 
 
-  /*
-  ======================================
-  ANDROID MAY LOAD VOICES LATER
-  ======================================
-  */
-
   window.speechSynthesis.onvoiceschanged =
     function() {
 
@@ -1052,21 +1129,8 @@ function clearQuestionInput() {
   }
 
 
-  /*
-  ======================================
-  CLEAR CURRENT QUESTION
-  ======================================
-  */
-
   questionInput.value =
     "";
-
-
-  /*
-  ======================================
-  PUT CURSOR BACK
-  ======================================
-  */
 
   questionInput.focus();
 
@@ -1148,7 +1212,7 @@ async function askRwandaAI() {
     <div class="ai-answer">
 
       <p>
-        🤖 Rwanda AI is thinking...
+        Rwanda AI is thinking...
       </p>
 
     </div>
@@ -1181,18 +1245,24 @@ async function askRwandaAI() {
       knowledge
     ) {
 
+      const cleanKnowledgeAnswer =
+        cleanAnswer(
+          knowledge.answer
+        );
+
+
       answerBox.innerHTML = `
 
         <div class="ai-answer">
 
           <p>
             ${formatAnswer(
-              knowledge.answer
+              cleanKnowledgeAnswer
             )}
           </p>
 
           <small>
-            🇷🇼 Rwanda AI Knowledge
+            Rwanda AI Knowledge
           </small>
 
         </div>
@@ -1216,7 +1286,7 @@ async function askRwandaAI() {
       ) {
 
         speakAnswerWhenReady(
-          knowledge.answer
+          cleanKnowledgeAnswer
         );
 
       }
@@ -1260,13 +1330,19 @@ async function askRwandaAI() {
     ==================================
     */
 
+    const cleanGroqAnswer =
+      cleanAnswer(
+        result.answer
+      );
+
+
     answerBox.innerHTML = `
 
       <div class="ai-answer">
 
         <p>
           ${formatAnswer(
-            result.answer
+            cleanGroqAnswer
           )}
         </p>
 
@@ -1283,6 +1359,7 @@ async function askRwandaAI() {
                 )
               : ""
           }
+
         </small>
 
       </div>
@@ -1301,7 +1378,7 @@ async function askRwandaAI() {
     ) {
 
       speakAnswerWhenReady(
-        result.answer
+        cleanGroqAnswer
       );
 
     }
@@ -1329,7 +1406,7 @@ async function askRwandaAI() {
       <div class="ai-answer">
 
         <p>
-          ❌ Rwanda AI failed.
+          Rwanda AI failed.
         </p>
 
         <p>
@@ -1372,7 +1449,9 @@ BUTTON
 ========================================
 */
 
-if (askBtn) {
+if (
+  askBtn
+) {
 
   askBtn.addEventListener(
     "click",
@@ -1388,7 +1467,9 @@ ENTER KEY
 ========================================
 */
 
-if (questionInput) {
+if (
+  questionInput
+) {
 
   questionInput.addEventListener(
     "keydown",
@@ -1457,5 +1538,5 @@ READY
 */
 
 console.log(
-  "🇷🇼 Rwanda AI Platform - Firestore Knowledge + Groq + Voice AI ready."
+  "Rwanda AI Platform - Firestore Knowledge + Groq + Voice AI ready."
 );
