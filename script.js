@@ -396,11 +396,24 @@ function cleanAIAnswer(text) {
     String(text);
 
 
+  /*
+  ========================================
+  REMOVE MARKDOWN HEADINGS
+  ========================================
+  */
+
   answer =
     answer.replace(
       /#{1,6}\s?/g,
       ""
     );
+
+
+  /*
+  ========================================
+  REMOVE BOLD MARKDOWN
+  ========================================
+  */
 
   answer =
     answer.replace(
@@ -408,11 +421,25 @@ function cleanAIAnswer(text) {
       ""
     );
 
+
+  /*
+  ========================================
+  REMOVE MARKDOWN BULLETS
+  ========================================
+  */
+
   answer =
     answer.replace(
-      /(?<!\w)\*(?!\w)/g,
+      /^\s*\*\s+/gm,
       ""
     );
+
+
+  /*
+  ========================================
+  REMOVE TABLE SYMBOL
+  ========================================
+  */
 
   answer =
     answer.replace(
@@ -420,17 +447,301 @@ function cleanAIAnswer(text) {
       " "
     );
 
+
+  /*
+  ========================================
+  REMOVE HORIZONTAL LINES
+  ========================================
+  */
+
   answer =
     answer.replace(
       /^[-_=]{3,}$/gm,
       ""
     );
 
+
+  /*
+  ========================================
+  REMOVE CODE FENCES
+  ========================================
+  */
+
   answer =
     answer.replace(
-      /```[\s\S]*?```/g,
+      /```/g,
       ""
     );
+
+
+  /*
+  ========================================
+  LATEX TEXT
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\text\{([^{}]*)\}/g,
+      "$1"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\mathrm\{([^{}]*)\}/g,
+      "$1"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\mathbf\{([^{}]*)\}/g,
+      "$1"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\operatorname\{([^{}]*)\}/g,
+      "$1"
+    );
+
+
+  /*
+  ========================================
+  LATEX FRACTION
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\frac\{([^{}]*)\}\{([^{}]*)\}/g,
+      "$1 / $2"
+    );
+
+
+  /*
+  ========================================
+  LATEX SQRT
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\sqrt\{([^{}]*)\}/g,
+      "sqrt($1)"
+    );
+
+
+  /*
+  ========================================
+  LATEX SYMBOLS
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\times/g,
+      "×"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\cdot/g,
+      "×"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\div/g,
+      "÷"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\pm/g,
+      "±"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\leq/g,
+      "≤"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\geq/g,
+      "≥"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\approx/g,
+      "≈"
+    );
+
+
+  /*
+  ========================================
+  LATEX BRACKETS
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /\\/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /\\/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /\\/g,
+      ""
+    );
+
+
+  /*
+  ========================================
+  REMOVE DOLLAR MATH MARKERS
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\$\$/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /\$/g,
+      ""
+    );
+
+
+  /*
+  ========================================
+  LATEX ENVIRONMENTS
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\begin\{[^{}]*\}/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /\\end\{[^{}]*\}/g,
+      ""
+    );
+
+
+  /*
+  ========================================
+  COMMON LATEX COMMANDS
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\left/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /\\right/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /\\,/g,
+      " "
+    );
+
+
+  answer =
+    answer.replace(
+      /\\;/g,
+      " "
+    );
+
+
+  answer =
+    answer.replace(
+      /\\!/g,
+      ""
+    );
+
+
+  /*
+  ========================================
+  SIMPLE POWERS
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\^\{2\}/g,
+      "2"
+    );
+
+
+  answer =
+    answer.replace(
+      /\^\{3\}/g,
+      "3"
+    );
+
+
+  /*
+  ========================================
+  REMOVE REMAINING BACKSLASH
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /\\/g,
+      ""
+    );
+
+
+  /*
+  ========================================
+  CLEAN SPACES
+  ========================================
+  */
 
   answer =
     answer.replace(
@@ -438,11 +749,13 @@ function cleanAIAnswer(text) {
       " "
     );
 
+
   answer =
     answer.replace(
       /\n{3,}/g,
       "\n\n"
     );
+
 
   return answer.trim();
 
@@ -779,6 +1092,43 @@ Do not use unnecessary markdown symbols.
 Do not use ##, **, |, or horizontal separator lines.
 
 Keep answers readable and useful.
+
+For mathematics, physics, science, and calculations, ALWAYS use plain text.
+
+NEVER use LaTeX.
+
+Do not use LaTeX commands such as:
+\\text{}
+\\frac{}
+\\sqrt{}
+\\times
+\\cdot
+\\[
+\\]
+\\(
+\\)
+$$
+
+Write units in simple text such as:
+m/s2
+kg
+N
+J
+W
+km/h
+
+Show calculations step by step in plain text.
+
+Example:
+
+Acceleration = 4 m/s2
+Time = 10 s
+
+Final speed = acceleration × time
+Final speed = 4 × 10
+Final speed = 40 m/s
+
+Make mathematical answers easy to read and copy on a phone.
 `
           })
       }
