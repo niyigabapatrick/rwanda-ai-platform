@@ -9,6 +9,13 @@ VOICE AI
 ========================================
 */
 
+
+/*
+========================================
+FIRESTORE
+========================================
+*/
+
 import {
   collection,
   addDoc,
@@ -20,12 +27,23 @@ import {
   doc
 } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
 
+
+/*
+========================================
+FIREBASE AUTH
+========================================
+*/
+
 import {
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-auth.js";
 
-import { db, auth } from "./firebase.js";
+
+import {
+  db,
+  auth
+} from "./firebase.js";
 
 
 /*
@@ -47,35 +65,47 @@ DOM
 const askBtn =
   document.getElementById("askBtn");
 
+
 const questionInput =
   document.getElementById("question");
+
 
 const answerBox =
   document.getElementById("answer");
 
+
 const newChatBtn =
   document.getElementById("newChatBtn");
+
 
 const stickerBtn =
   document.getElementById("stickerBtn");
 
+
 const stickerPicker =
   document.getElementById("stickerPicker");
+
 
 const voiceBtn =
   document.getElementById("voiceBtn");
 
+
 const voiceStatus =
   document.getElementById("voiceStatus");
+
 
 const userEmail =
   document.getElementById("userEmail");
 
+
 const logoutBtn =
   document.getElementById("logoutBtn");
 
+
 const pastConversationsBtn =
-  document.getElementById("pastConversationsBtn");
+  document.getElementById(
+    "pastConversationsBtn"
+  );
 
 
 /*
@@ -85,10 +115,15 @@ STATE
 */
 
 let currentUser = null;
+
 let currentConversationId = null;
+
 let conversationMessages = [];
+
 let memories = [];
+
 let isThinking = false;
+
 let voiceQuestion = false;
 
 
@@ -99,10 +134,16 @@ VOICE STATE
 */
 
 let recognition = null;
+
 let voiceSessionId = 0;
+
 let shouldContinueListening = false;
+
 let lastAcceptedFinal = "";
+
 let lastAcceptedFinalTime = 0;
+
+let voiceButtonListening = false;
 
 
 /*
@@ -111,27 +152,41 @@ AUTH
 ========================================
 */
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+  auth,
+  async (user) => {
 
-  currentUser = user;
+    currentUser =
+      user;
 
-  if (!user) {
 
-    if (userEmail) {
-      userEmail.textContent = "";
+    if (!user) {
+
+      if (userEmail) {
+
+        userEmail.textContent =
+          "";
+
+      }
+
+      return;
+
     }
 
-    return;
+
+    if (userEmail) {
+
+      userEmail.textContent =
+        user.email ||
+        "User";
+
+    }
+
+
+    await loadMemories();
+
   }
-
-  if (userEmail) {
-    userEmail.textContent =
-      user.email || "User";
-  }
-
-  await loadMemories();
-
-});
+);
 
 
 /*
@@ -142,32 +197,50 @@ LOAD MEMORIES
 
 async function loadMemories() {
 
-  if (!currentUser) return;
+  if (!currentUser) {
+    return;
+  }
+
 
   try {
 
-    const q = query(
-      collection(db, "memories"),
-      where(
-        "userId",
-        "==",
-        currentUser.uid
-      )
-    );
+    const q =
+      query(
+        collection(
+          db,
+          "memories"
+        ),
+
+        where(
+          "userId",
+          "==",
+          currentUser.uid
+        )
+      );
+
 
     const snapshot =
       await getDocs(q);
 
+
     memories = [];
 
-    snapshot.forEach((item) => {
 
-      memories.push({
-        id: item.id,
-        ...item.data()
-      });
+    snapshot.forEach(
+      (item) => {
 
-    });
+        memories.push({
+
+          id:
+            item.id,
+
+          ...item.data()
+
+        });
+
+      }
+    );
+
 
   } catch (error) {
 
@@ -197,10 +270,16 @@ async function createConversation() {
 
   }
 
+
   const conversationRef =
     await addDoc(
-      collection(db, "conversations"),
+      collection(
+        db,
+        "conversations"
+      ),
+
       {
+
         userId:
           currentUser.uid,
 
@@ -212,15 +291,20 @@ async function createConversation() {
 
         updatedAt:
           serverTimestamp()
+
       }
     );
+
 
   currentConversationId =
     conversationRef.id;
 
+
   conversationMessages = [];
 
+
   return currentConversationId;
+
 }
 
 
@@ -230,31 +314,43 @@ CREATE CONVERSATION TITLE
 ========================================
 */
 
-function createConversationTitle(text) {
+function createConversationTitle(
+  text
+) {
 
   if (!text) {
+
     return "New Conversation";
+
   }
+
 
   let title =
     String(text)
       .replace(/\s+/g, " ")
       .trim();
 
+
   if (!title) {
+
     return "New Conversation";
+
   }
+
 
   if (title.length > 65) {
 
     title =
       title
         .substring(0, 65)
-        .trim() + "...";
+        .trim() +
+      "...";
 
   }
 
+
   return title;
+
 }
 
 
@@ -269,9 +365,15 @@ async function updateConversationTitle(
   title
 ) {
 
-  if (!conversationId || !title) {
+  if (
+    !conversationId ||
+    !title
+  ) {
+
     return;
+
   }
+
 
   try {
 
@@ -281,14 +383,19 @@ async function updateConversationTitle(
         "conversations",
         conversationId
       ),
+
       {
+
         title:
           title,
 
         updatedAt:
           serverTimestamp()
+
       }
+
     );
+
 
   } catch (error) {
 
@@ -318,14 +425,22 @@ async function saveMessage(
     !currentConversationId ||
     !text
   ) {
+
     return;
+
   }
+
 
   try {
 
     await addDoc(
-      collection(db, "messages"),
+      collection(
+        db,
+        "messages"
+      ),
+
       {
+
         conversationId:
           currentConversationId,
 
@@ -340,12 +455,14 @@ async function saveMessage(
 
         createdAt:
           serverTimestamp()
+
       }
+
     );
 
 
     /*
-    Only first user message becomes title
+    First user message becomes title
     */
 
     if (
@@ -361,12 +478,14 @@ async function saveMessage(
           text
         );
 
+
       await updateConversationTitle(
         currentConversationId,
         title
       );
 
     }
+
 
   } catch (error) {
 
@@ -392,6 +511,7 @@ function cleanAIAnswer(text) {
     return "";
   }
 
+
   let answer =
     String(text);
 
@@ -404,20 +524,27 @@ function cleanAIAnswer(text) {
 
   answer =
     answer.replace(
-      /#{1,6}\s?/g,
+      /^\s*#{1,6}\s*/gm,
       ""
     );
 
 
   /*
   ========================================
-  REMOVE BOLD MARKDOWN
+  REMOVE BOLD / ITALIC MARKDOWN
   ========================================
   */
 
   answer =
     answer.replace(
       /\*\*/g,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /__/g,
       ""
     );
 
@@ -431,6 +558,13 @@ function cleanAIAnswer(text) {
   answer =
     answer.replace(
       /^\s*\*\s+/gm,
+      ""
+    );
+
+
+  answer =
+    answer.replace(
+      /^\s*-\s+/gm,
       ""
     );
 
@@ -456,7 +590,7 @@ function cleanAIAnswer(text) {
 
   answer =
     answer.replace(
-      /^[-_=]{3,}$/gm,
+      /^\s*[-_=]{3,}\s*$/gm,
       ""
     );
 
@@ -466,6 +600,13 @@ function cleanAIAnswer(text) {
   REMOVE CODE FENCES
   ========================================
   */
+
+  answer =
+    answer.replace(
+      /```[a-zA-Z0-9_-]*/g,
+      ""
+    );
+
 
   answer =
     answer.replace(
@@ -577,7 +718,21 @@ function cleanAIAnswer(text) {
 
   answer =
     answer.replace(
+      /\\le/g,
+      "≤"
+    );
+
+
+  answer =
+    answer.replace(
       /\\geq/g,
+      "≥"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\ge/g,
       "≥"
     );
 
@@ -589,6 +744,34 @@ function cleanAIAnswer(text) {
     );
 
 
+  answer =
+    answer.replace(
+      /\\neq/g,
+      "≠"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\infty/g,
+      "∞"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\rightarrow/g,
+      "→"
+    );
+
+
+  answer =
+    answer.replace(
+      /\\to/g,
+      "→"
+    );
+
+
   /*
   ========================================
   LATEX BRACKETS
@@ -597,28 +780,28 @@ function cleanAIAnswer(text) {
 
   answer =
     answer.replace(
-      /\\/g,
+      /\\\[/g,
       ""
     );
 
 
   answer =
     answer.replace(
-      /\\/g,
+      /\\\]/g,
       ""
     );
 
 
   answer =
     answer.replace(
-      /\\/g,
+      /\\\(/g,
       ""
     );
 
 
   answer =
     answer.replace(
-      /\\/g,
+      /\\\)/g,
       ""
     );
 
@@ -704,6 +887,13 @@ function cleanAIAnswer(text) {
     );
 
 
+  answer =
+    answer.replace(
+      /\\quad/g,
+      " "
+    );
+
+
   /*
   ========================================
   SIMPLE POWERS
@@ -713,20 +903,27 @@ function cleanAIAnswer(text) {
   answer =
     answer.replace(
       /\^\{2\}/g,
-      "2"
+      "²"
     );
 
 
   answer =
     answer.replace(
       /\^\{3\}/g,
-      "3"
+      "³"
+    );
+
+
+  answer =
+    answer.replace(
+      /\^\{4\}/g,
+      "⁴"
     );
 
 
   /*
   ========================================
-  REMOVE REMAINING BACKSLASH
+  REMOVE REMAINING LATEX BACKSLASH
   ========================================
   */
 
@@ -764,50 +961,184 @@ function cleanAIAnswer(text) {
 
 /*
 ========================================
-RENDER ANSWER
+PREPARE CONVERSATION VIEW
 ========================================
 */
 
-function renderAnswer(text) {
+function prepareConversationView() {
 
-  if (!answerBox) return;
+  if (!answerBox) {
+    return;
+  }
 
-  answerBox.innerText =
-    cleanAIAnswer(text);
 
-  answerBox.style.display =
-    "block";
+  /*
+  Conversation stays inside
+  its own scroll area.
+  */
 
-  answerBox.classList.add(
-    "rwanda-ai-answer-active"
-  );
+  answerBox.style.maxHeight =
+    "70vh";
 
-  scrollToCurrentAnswer();
+
+  answerBox.style.overflowY =
+    "auto";
+
+
+  answerBox.style.overflowX =
+    "hidden";
+
+
+  answerBox.style.scrollBehavior =
+    "smooth";
+
+
+  answerBox.style.boxSizing =
+    "border-box";
+
+
+  answerBox.style.scrollPaddingTop =
+    "0px";
+
+
+  answerBox.style.scrollPaddingBottom =
+    "30px";
 
 }
 
 
 /*
 ========================================
-SCROLL TO CURRENT ANSWER
+SCROLL CURRENT ANSWER TO ITS TOP
 ========================================
 */
 
-function scrollToCurrentAnswer() {
+function scrollToCurrentAnswer(
+  targetElement = null
+) {
 
-  if (!answerBox) return;
+  if (!answerBox) {
+    return;
+  }
 
-  setTimeout(() => {
 
-    answerBox.scrollIntoView({
-      behavior:
-        "smooth",
+  setTimeout(
+    () => {
 
-      block:
-        "center"
-    });
+      /*
+      ====================================
+      IMPORTANT
+      ====================================
 
-  }, 150);
+      DO NOT use scrollIntoView().
+
+      That moves the whole webpage.
+
+      We only scroll INSIDE answerBox.
+      */
+
+
+      if (targetElement) {
+
+        /*
+        Find the exact position of the
+        current answer inside answerBox.
+        */
+
+        const boxRect =
+          answerBox.getBoundingClientRect();
+
+
+        const targetRect =
+          targetElement.getBoundingClientRect();
+
+
+        const targetTop =
+          targetRect.top -
+          boxRect.top +
+          answerBox.scrollTop;
+
+
+        /*
+        CURRENT ANSWER STARTS AT TOP
+        */
+
+        answerBox.scrollTo({
+
+          top:
+            Math.max(
+              0,
+              targetTop
+            ),
+
+          behavior:
+            "smooth"
+
+        });
+
+
+        return;
+
+      }
+
+
+      /*
+      For a simple answer without
+      conversation messages.
+      */
+
+      answerBox.scrollTo({
+
+        top:
+          0,
+
+        behavior:
+          "smooth"
+
+      });
+
+    },
+
+    80
+  );
+
+}
+
+
+/*
+========================================
+RENDER SIMPLE ANSWER
+========================================
+*/
+
+function renderAnswer(text) {
+
+  if (!answerBox) {
+    return;
+  }
+
+
+  prepareConversationView();
+
+
+  answerBox.innerText =
+    cleanAIAnswer(text);
+
+
+  answerBox.style.display =
+    "block";
+
+
+  answerBox.classList.add(
+    "rwanda-ai-answer-active"
+  );
+
+
+  /*
+  Answer starts at TOP.
+  */
+
+  scrollToCurrentAnswer();
 
 }
 
@@ -815,7 +1146,6 @@ function scrollToCurrentAnswer() {
 /*
 ========================================
 RENDER FULL CONVERSATION
-QUESTION + HIGHLIGHTED ANSWER
 ========================================
 */
 
@@ -823,196 +1153,247 @@ function renderConversation(
   messages
 ) {
 
-  if (!answerBox) return;
+  if (!answerBox) {
+    return;
+  }
 
-  answerBox.innerHTML = "";
+
+  prepareConversationView();
+
+
+  answerBox.innerHTML =
+    "";
+
 
   answerBox.style.display =
     "block";
 
 
-  messages.forEach((message) => {
-
-    const wrapper =
-      document.createElement("div");
+  let lastAssistantElement =
+    null;
 
 
-    /*
-    ====================================
-    BASE MESSAGE
-    ====================================
-    */
+  messages.forEach(
+    (message) => {
 
-    wrapper.className =
-      message.role === "user"
-        ? "rwanda-user-message"
-        : "rwanda-ai-message";
+      const wrapper =
+        document.createElement(
+          "div"
+        );
 
 
-    /*
-    ====================================
-    LABEL
-    ====================================
-    */
+      /*
+      ====================================
+      BASE MESSAGE
+      ====================================
+      */
 
-    const label =
-      document.createElement("div");
-
-    label.className =
-      "rwanda-message-label";
-
-    label.textContent =
-      message.role === "user"
-        ? "YOU"
-        : "RWANDA AI";
+      wrapper.className =
+        message.role === "user"
+          ? "rwanda-user-message"
+          : "rwanda-ai-message";
 
 
-    /*
-    ====================================
-    CONTENT
-    ====================================
-    */
+      /*
+      ====================================
+      LABEL
+      ====================================
+      */
 
-    const content =
-      document.createElement("div");
+      const label =
+        document.createElement(
+          "div"
+        );
 
-    content.className =
-      "rwanda-message-content";
 
-    content.innerText =
-      cleanAIAnswer(
-        message.content || ""
+      label.className =
+        "rwanda-message-label";
+
+
+      label.textContent =
+        message.role === "user"
+          ? "YOU"
+          : "RWANDA AI";
+
+
+      /*
+      ====================================
+      CONTENT
+      ====================================
+      */
+
+      const content =
+        document.createElement(
+          "div"
+        );
+
+
+      content.className =
+        "rwanda-message-content";
+
+
+      content.innerText =
+        cleanAIAnswer(
+          message.content || ""
+        );
+
+
+      /*
+      ====================================
+      USER MESSAGE
+      ====================================
+      */
+
+      if (
+        message.role === "user"
+      ) {
+
+        wrapper.style.marginBottom =
+          "30px";
+
+
+        wrapper.style.padding =
+          "15px 17px";
+
+
+        wrapper.style.borderRadius =
+          "15px";
+
+
+        wrapper.style.background =
+          "#f4f4f5";
+
+
+        wrapper.style.border =
+          "1px solid #e5e7eb";
+
+      }
+
+
+      /*
+      ====================================
+      AI ANSWER
+      ====================================
+      */
+
+      if (
+        message.role === "assistant"
+      ) {
+
+        wrapper.style.marginTop =
+          "12px";
+
+
+        wrapper.style.marginBottom =
+          "32px";
+
+
+        wrapper.style.padding =
+          "20px";
+
+
+        wrapper.style.borderRadius =
+          "18px";
+
+
+        wrapper.style.background =
+          "#eef6ff";
+
+
+        wrapper.style.border =
+          "1px solid #bfdbfe";
+
+
+        wrapper.style.boxShadow =
+          "0 5px 18px rgba(0, 0, 0, 0.09)";
+
+
+        /*
+        Keep reference to the
+        current/latest AI answer.
+        */
+
+        lastAssistantElement =
+          wrapper;
+
+      }
+
+
+      /*
+      ====================================
+      LABEL STYLE
+      ====================================
+      */
+
+      label.style.fontSize =
+        "12px";
+
+
+      label.style.fontWeight =
+        "700";
+
+
+      label.style.marginBottom =
+        "9px";
+
+
+      label.style.letterSpacing =
+        "0.5px";
+
+
+      if (
+        message.role === "assistant"
+      ) {
+
+        label.style.color =
+          "#2563eb";
+
+      } else {
+
+        label.style.color =
+          "#6b7280";
+
+      }
+
+
+      /*
+      ====================================
+      CONTENT STYLE
+      ====================================
+      */
+
+      content.style.fontSize =
+        "15px";
+
+
+      content.style.lineHeight =
+        "1.7";
+
+
+      content.style.whiteSpace =
+        "pre-wrap";
+
+
+      content.style.wordBreak =
+        "break-word";
+
+
+      wrapper.appendChild(
+        label
       );
 
 
-    /*
-    ====================================
-    USER QUESTION DESIGN
-    ====================================
-    */
+      wrapper.appendChild(
+        content
+      );
 
-    if (
-      message.role === "user"
-    ) {
 
-      wrapper.style.marginBottom =
-        "30px";
-
-      wrapper.style.padding =
-        "15px 17px";
-
-      wrapper.style.borderRadius =
-        "15px";
-
-      wrapper.style.background =
-        "#f4f4f5";
-
-      wrapper.style.border =
-        "1px solid #e5e7eb";
+      answerBox.appendChild(
+        wrapper
+      );
 
     }
-
-
-    /*
-    ====================================
-    AI ANSWER HIGHLIGHT
-    ====================================
-    */
-
-    if (
-      message.role === "assistant"
-    ) {
-
-      wrapper.style.marginTop =
-        "12px";
-
-      wrapper.style.marginBottom =
-        "32px";
-
-      wrapper.style.padding =
-        "20px";
-
-      wrapper.style.borderRadius =
-        "18px";
-
-      wrapper.style.background =
-        "#eef6ff";
-
-      wrapper.style.border =
-        "1px solid #bfdbfe";
-
-      wrapper.style.boxShadow =
-        "0 5px 18px rgba(0, 0, 0, 0.09)";
-
-    }
-
-
-    /*
-    ====================================
-    LABEL STYLE
-    ====================================
-    */
-
-    label.style.fontSize =
-      "12px";
-
-    label.style.fontWeight =
-      "700";
-
-    label.style.marginBottom =
-      "9px";
-
-    label.style.letterSpacing =
-      "0.5px";
-
-
-    if (
-      message.role === "assistant"
-    ) {
-
-      label.style.color =
-        "#2563eb";
-
-    } else {
-
-      label.style.color =
-        "#6b7280";
-
-    }
-
-
-    /*
-    ====================================
-    CONTENT STYLE
-    ====================================
-    */
-
-    content.style.fontSize =
-      "15px";
-
-    content.style.lineHeight =
-      "1.7";
-
-    content.style.whiteSpace =
-      "pre-wrap";
-
-    content.style.wordBreak =
-      "break-word";
-
-
-    wrapper.appendChild(
-      label
-    );
-
-    wrapper.appendChild(
-      content
-    );
-
-    answerBox.appendChild(
-      wrapper
-    );
-
-  });
+  );
 
 
   answerBox.classList.add(
@@ -1020,7 +1401,29 @@ function renderConversation(
   );
 
 
-  scrollToCurrentAnswer();
+  /*
+  ========================================
+  VERY IMPORTANT
+  ========================================
+
+  The latest/current Rwanda AI answer
+  is placed at the TOP of the
+  conversation viewport.
+
+  The whole webpage does NOT scroll.
+  */
+
+  if (lastAssistantElement) {
+
+    scrollToCurrentAnswer(
+      lastAssistantElement
+    );
+
+  } else {
+
+    scrollToCurrentAnswer();
+
+  }
 
 }
 
@@ -1039,12 +1442,15 @@ async function callBackend(
     await fetch(
       GROQ_URL,
       {
+
         method:
           "POST",
 
         headers: {
+
           "Content-Type":
             "text/plain;charset=utf-8"
+
         },
 
         body:
@@ -1071,6 +1477,7 @@ async function callBackend(
               memories,
 
             systemInstruction: `
+
 You are Rwanda AI.
 
 You are Rwanda AI Platform's intelligent assistant.
@@ -1098,6 +1505,7 @@ For mathematics, physics, science, and calculations, ALWAYS use plain text.
 NEVER use LaTeX.
 
 Do not use LaTeX commands such as:
+
 \\text{}
 \\frac{}
 \\sqrt{}
@@ -1110,6 +1518,7 @@ Do not use LaTeX commands such as:
 $$
 
 Write units in simple text such as:
+
 m/s2
 kg
 N
@@ -1129,8 +1538,11 @@ Final speed = 4 × 10
 Final speed = 40 m/s
 
 Make mathematical answers easy to read and copy on a phone.
+
 `
+
           })
+
       }
     );
 
@@ -1226,13 +1638,21 @@ async function askRwandaAI(
   }
 
 
-  isThinking = true;
+  isThinking =
+    true;
+
 
   voiceQuestion =
     voiceMode;
 
 
   try {
+
+    /*
+    ======================================
+    CREATE CONVERSATION IF NEEDED
+    ======================================
+    */
 
     if (!currentConversationId) {
 
@@ -1241,12 +1661,20 @@ async function askRwandaAI(
     }
 
 
+    /*
+    ======================================
+    USER MESSAGE
+    ======================================
+    */
+
     const userMessage = {
+
       role:
         "user",
 
       content:
         question
+
     };
 
 
@@ -1266,12 +1694,20 @@ async function askRwandaAI(
     );
 
 
+    /*
+    ======================================
+    THINKING MESSAGE
+    ======================================
+    */
+
     conversationMessages.push({
+
       role:
         "assistant",
 
       content:
         "Rwanda AI is thinking..."
+
     });
 
 
@@ -1280,11 +1716,23 @@ async function askRwandaAI(
     );
 
 
+    /*
+    ======================================
+    CALL BACKEND
+    ======================================
+    */
+
     const answer =
       await callBackend(
         question
       );
 
+
+    /*
+    ======================================
+    REMOVE THINKING
+    ======================================
+    */
 
     conversationMessages =
       conversationMessages.filter(
@@ -1294,14 +1742,28 @@ async function askRwandaAI(
       );
 
 
+    /*
+    ======================================
+    ADD REAL ANSWER
+    ======================================
+    */
+
     conversationMessages.push({
+
       role:
         "assistant",
 
       content:
         answer
+
     });
 
+
+    /*
+    ======================================
+    SAVE ANSWER
+    ======================================
+    */
 
     await saveMessage(
       "assistant",
@@ -1309,10 +1771,22 @@ async function askRwandaAI(
     );
 
 
+    /*
+    ======================================
+    RENDER CURRENT ANSWER
+    ======================================
+    */
+
     renderConversation(
       conversationMessages
     );
 
+
+    /*
+    ======================================
+    VOICE ANSWER
+    ======================================
+    */
 
     if (voiceQuestion) {
 
@@ -1323,12 +1797,19 @@ async function askRwandaAI(
     }
 
 
+    /*
+    ======================================
+    CLEAR INPUT
+    ======================================
+    */
+
     if (questionInput) {
 
       questionInput.value =
         "";
 
     }
+
 
   } catch (error) {
 
@@ -1351,11 +1832,13 @@ async function askRwandaAI(
 
 
     conversationMessages.push({
+
       role:
         "assistant",
 
       content:
         errorMessage
+
     });
 
 
@@ -1366,7 +1849,8 @@ async function askRwandaAI(
   }
 
 
-  isThinking = false;
+  isThinking =
+    false;
 
 }
 
@@ -1383,7 +1867,9 @@ if (askBtn) {
     "click",
     () => {
 
-      askRwandaAI(false);
+      askRwandaAI(
+        false
+      );
 
     }
   );
@@ -1410,7 +1896,10 @@ if (questionInput) {
 
         event.preventDefault();
 
-        askRwandaAI(false);
+
+        askRwandaAI(
+          false
+        );
 
       }
 
@@ -1435,8 +1924,10 @@ if (newChatBtn) {
       currentConversationId =
         null;
 
+
       conversationMessages =
         [];
+
 
       voiceQuestion =
         false;
@@ -1447,8 +1938,13 @@ if (newChatBtn) {
         answerBox.innerHTML =
           "";
 
+
         answerBox.style.display =
           "none";
+
+
+        answerBox.scrollTop =
+          0;
 
       }
 
@@ -1457,6 +1953,7 @@ if (newChatBtn) {
 
         questionInput.value =
           "";
+
 
         questionInput.focus();
 
@@ -1492,6 +1989,7 @@ function createPastConversationsDesign() {
       "div"
     );
 
+
   panel.id =
     "rwandaPastConversations";
 
@@ -1515,6 +2013,7 @@ function createPastConversationsDesign() {
             </p>
 
           </div>
+
 
           <button
             type="button"
@@ -1568,6 +2067,7 @@ function createPastConversationsDesign() {
       "style"
     );
 
+
   style.id =
     "rwandaPastConversationStyles";
 
@@ -1575,183 +2075,352 @@ function createPastConversationsDesign() {
   style.textContent = `
 
     #rwandaPastConversations {
+
       display: none;
+
       position: fixed;
+
       inset: 0;
+
       z-index: 99999;
+
     }
+
 
     .rwanda-conversation-overlay {
+
       position: fixed;
+
       inset: 0;
-      background: rgba(0,0,0,0.58);
+
+      background:
+        rgba(0,0,0,0.58);
+
       display: flex;
+
       justify-content: center;
+
       align-items: center;
+
       padding: 18px;
+
       box-sizing: border-box;
+
     }
+
 
     .rwanda-conversation-modal {
+
       width: 100%;
+
       max-width: 650px;
+
       max-height: 88vh;
+
       background: #ffffff;
+
       border-radius: 20px;
+
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.30);
+
+      box-shadow:
+        0 20px 60px
+        rgba(0,0,0,0.30);
+
       display: flex;
+
       flex-direction: column;
+
     }
+
 
     .rwanda-conversation-header {
+
       display: flex;
+
       align-items: center;
+
       justify-content: space-between;
+
       padding: 20px;
-      border-bottom: 1px solid #eeeeee;
+
+      border-bottom:
+        1px solid #eeeeee;
+
     }
+
 
     .rwanda-conversation-header h2 {
+
       margin: 0;
+
       font-size: 21px;
+
       color: #111827;
+
     }
+
 
     .rwanda-conversation-header p {
-      margin: 5px 0 0;
+
+      margin:
+        5px 0 0;
+
       font-size: 13px;
+
       color: #6b7280;
+
     }
+
 
     .rwanda-close-conversations {
+
       width: 40px;
+
       height: 40px;
+
       border: none;
+
       border-radius: 50%;
+
       background: #f3f4f6;
+
       font-size: 20px;
+
       cursor: pointer;
+
     }
+
 
     .rwanda-conversation-search {
-      margin: 15px 18px;
-      padding: 11px 14px;
+
+      margin:
+        15px 18px;
+
+      padding:
+        11px 14px;
+
       background: #f3f4f6;
+
       border-radius: 13px;
+
       display: flex;
+
       align-items: center;
+
       gap: 8px;
+
     }
+
 
     .rwanda-conversation-search input {
+
       border: none;
+
       outline: none;
+
       background: transparent;
+
       width: 100%;
+
       font-size: 14px;
+
     }
+
 
     .rwanda-conversation-list {
+
       overflow-y: auto;
-      padding: 0 15px 18px;
+
+      padding:
+        0 15px 18px;
+
     }
+
 
     .rwanda-conversation-group-title {
+
       font-size: 12px;
+
       font-weight: 700;
+
       color: #6b7280;
-      padding: 12px 6px 7px;
-      text-transform: uppercase;
+
+      padding:
+        12px 6px 7px;
+
+      text-transform:
+        uppercase;
+
     }
+
 
     .rwanda-conversation-card {
+
       width: 100%;
-      border: 1px solid #eeeeee;
+
+      border:
+        1px solid #eeeeee;
+
       background: #ffffff;
+
       border-radius: 14px;
+
       padding: 14px;
+
       margin-bottom: 9px;
+
       display: flex;
+
       align-items: center;
+
       gap: 12px;
+
       text-align: left;
+
       cursor: pointer;
+
       box-sizing: border-box;
+
       transition: 0.2s;
+
     }
+
 
     .rwanda-conversation-card:hover {
+
       background: #f8fafc;
-      transform: translateY(-1px);
+
+      transform:
+        translateY(-1px);
+
     }
+
 
     .rwanda-conversation-icon {
+
       width: 40px;
+
       height: 40px;
+
       min-width: 40px;
+
       border-radius: 12px;
+
       background: #eef2ff;
+
       display: flex;
+
       align-items: center;
+
       justify-content: center;
+
       font-size: 19px;
+
     }
+
 
     .rwanda-conversation-info {
+
       min-width: 0;
+
       flex: 1;
+
     }
+
 
     .rwanda-conversation-title {
+
       font-size: 14px;
+
       font-weight: 600;
+
       color: #111827;
+
       overflow: hidden;
+
       white-space: nowrap;
+
       text-overflow: ellipsis;
+
     }
+
 
     .rwanda-conversation-date {
+
       margin-top: 4px;
+
       font-size: 11px;
+
       color: #9ca3af;
+
     }
+
 
     .rwanda-conversation-arrow {
+
       color: #9ca3af;
+
       font-size: 20px;
+
     }
+
 
     .rwanda-conversation-empty {
+
       text-align: center;
-      padding: 45px 20px;
+
+      padding:
+        45px 20px;
+
       color: #6b7280;
+
       font-size: 14px;
+
     }
 
+
     .rwanda-conversation-loading {
+
       text-align: center;
-      padding: 35px 10px;
+
+      padding:
+        35px 10px;
+
       color: #6b7280;
+
       font-size: 14px;
+
     }
+
 
     @media (max-width: 600px) {
 
       .rwanda-conversation-overlay {
+
         padding: 0;
+
         align-items: flex-end;
+
       }
+
 
       .rwanda-conversation-modal {
+
         max-width: none;
+
         max-height: 92vh;
-        border-radius: 20px 20px 0 0;
+
+        border-radius:
+          20px 20px 0 0;
+
       }
 
+
       .rwanda-conversation-header {
+
         padding: 17px;
+
       }
 
     }
@@ -1764,24 +2433,36 @@ function createPastConversationsDesign() {
   );
 
 
-  document
-    .getElementById(
+  const closeButton =
+    document.getElementById(
       "rwandaCloseConversations"
-    )
-    .addEventListener(
+    );
+
+
+  if (closeButton) {
+
+    closeButton.addEventListener(
       "click",
       closePastConversations
     );
 
+  }
 
-  document
-    .getElementById(
+
+  const searchInput =
+    document.getElementById(
       "rwandaConversationSearch"
-    )
-    .addEventListener(
+    );
+
+
+  if (searchInput) {
+
+    searchInput.addEventListener(
       "input",
       filterPastConversations
     );
+
+  }
 
 }
 
@@ -1801,6 +2482,11 @@ async function openPastConversations() {
     document.getElementById(
       "rwandaPastConversations"
     );
+
+
+  if (!panel) {
+    return;
+  }
 
 
   panel.style.display =
@@ -1865,9 +2551,13 @@ async function loadPastConversations() {
 
 
   list.innerHTML = `
+
     <div class="rwanda-conversation-loading">
+
       Loading conversations...
+
     </div>
+
   `;
 
 
@@ -1879,6 +2569,7 @@ async function loadPastConversations() {
           db,
           "conversations"
         ),
+
         where(
           "userId",
           "==",
@@ -1899,6 +2590,7 @@ async function loadPastConversations() {
           db,
           "messages"
         ),
+
         where(
           "userId",
           "==",
@@ -1921,10 +2613,12 @@ async function loadPastConversations() {
       (item) => {
 
         allMessages.push({
+
           id:
             item.id,
 
           ...item.data()
+
         });
 
       }
@@ -2108,10 +2802,14 @@ async function loadPastConversations() {
 
 
     list.innerHTML = `
+
       <div class="rwanda-conversation-empty">
+
         Unable to load past conversations.
         Please try again.
+
       </div>
+
     `;
 
   }
@@ -2146,11 +2844,13 @@ function formatConversationDate(
   return date.toLocaleString(
     [],
     {
+
       dateStyle:
         "medium",
 
       timeStyle:
         "short"
+
     }
   );
 
@@ -2259,7 +2959,9 @@ function renderPastConversations(
     );
 
 
-  if (!list) return;
+  if (!list) {
+    return;
+  }
 
 
   list.innerHTML =
@@ -2271,9 +2973,13 @@ function renderPastConversations(
   ) {
 
     list.innerHTML = `
+
       <div class="rwanda-conversation-empty">
+
         No past conversations yet.
+
       </div>
+
     `;
 
     return;
@@ -2316,10 +3022,15 @@ function renderPastConversations(
 
 
   const order = [
+
     "Today",
+
     "Yesterday",
+
     "Previous 7 Days",
+
     "Older"
+
   ];
 
 
@@ -2379,29 +3090,40 @@ function renderPastConversations(
           button.innerHTML = `
 
             <div class="rwanda-conversation-icon">
+
               💬
+
             </div>
+
 
             <div class="rwanda-conversation-info">
 
               <div class="rwanda-conversation-title">
+
                 ${escapeHTML(
                   conversation.title
                 )}
+
               </div>
 
+
               <div class="rwanda-conversation-date">
+
                 ${escapeHTML(
                   formatConversationDate(
                     timestamp
                   )
                 )}
+
               </div>
 
             </div>
 
+
             <div class="rwanda-conversation-arrow">
+
               ›
+
             </div>
 
           `;
@@ -2625,8 +3347,7 @@ if (stickerPicker) {
 
 
       if (
-        target.tagName !==
-          "BUTTON" &&
+        target.tagName !== "BUTTON" &&
         !target.classList.contains(
           "sticker"
         )
@@ -2651,6 +3372,7 @@ if (stickerPicker) {
 
         questionInput.value +=
           sticker;
+
 
         questionInput.focus();
 
@@ -2680,7 +3402,9 @@ if (logoutBtn) {
 
       try {
 
-        await signOut(auth);
+        await signOut(
+          auth
+        );
 
       } catch (error) {
 
@@ -2860,18 +3584,33 @@ function createRecognitionSession() {
     new SpeechRecognition();
 
 
+  /*
+  ======================================
+  VOICE LANGUAGE
+  ======================================
+  */
+
   recognitionInstance.lang =
     "en-US";
+
 
   recognitionInstance.continuous =
     false;
 
+
   recognitionInstance.interimResults =
     true;
+
 
   recognitionInstance.maxAlternatives =
     1;
 
+
+  /*
+  ======================================
+  START
+  ======================================
+  */
 
   recognitionInstance.onstart =
     () => {
@@ -2905,6 +3644,12 @@ function createRecognitionSession() {
     };
 
 
+  /*
+  ======================================
+  RESULT
+  ======================================
+  */
+
   recognitionInstance.onresult =
     (event) => {
 
@@ -2921,6 +3666,7 @@ function createRecognitionSession() {
       let interim =
         "";
 
+
       let finalText =
         "";
 
@@ -2928,8 +3674,10 @@ function createRecognitionSession() {
       for (
         let i =
           event.resultIndex;
+
         i <
           event.results.length;
+
         i++
       ) {
 
@@ -2975,6 +3723,12 @@ function createRecognitionSession() {
     };
 
 
+  /*
+  ======================================
+  ERROR
+  ======================================
+  */
+
   recognitionInstance.onerror =
     (event) => {
 
@@ -3003,6 +3757,10 @@ function createRecognitionSession() {
           false;
 
 
+        voiceButtonListening =
+          false;
+
+
         if (voiceStatus) {
 
           voiceStatus.textContent =
@@ -3010,10 +3768,40 @@ function createRecognitionSession() {
 
         }
 
+
+        if (voiceBtn) {
+
+          voiceBtn.classList.remove(
+            "listening"
+          );
+
+        }
+
+      }
+
+
+      if (
+        event.error ===
+        "no-speech"
+      ) {
+
+        if (voiceStatus) {
+
+          voiceStatus.textContent =
+            "No speech detected.";
+
+        }
+
       }
 
     };
 
+
+  /*
+  ======================================
+  END
+  ======================================
+  */
 
   recognitionInstance.onend =
     () => {
@@ -3059,6 +3847,7 @@ function createRecognitionSession() {
           },
           250
         );
+
 
       } else {
 
@@ -3152,6 +3941,7 @@ function startVoiceRecognition() {
   lastAcceptedFinal =
     "";
 
+
   lastAcceptedFinalTime =
     0;
 
@@ -3223,6 +4013,10 @@ function stopVoiceRecognition() {
   }
 
 
+  voiceButtonListening =
+    false;
+
+
   const voiceText =
     questionInput
       ? questionInput.value.trim()
@@ -3231,7 +4025,9 @@ function stopVoiceRecognition() {
 
   if (voiceText) {
 
-    askRwandaAI(true);
+    askRwandaAI(
+      true
+    );
 
   }
 
@@ -3246,25 +4042,26 @@ VOICE BUTTON
 
 if (voiceBtn) {
 
-  let listening =
-    false;
-
-
   voiceBtn.addEventListener(
     "click",
     () => {
 
-      if (!listening) {
+      if (
+        !voiceButtonListening
+      ) {
 
-        listening =
+        voiceButtonListening =
           true;
+
 
         startVoiceRecognition();
 
+
       } else {
 
-        listening =
+        voiceButtonListening =
           false;
+
 
         stopVoiceRecognition();
 
@@ -3278,7 +4075,7 @@ if (voiceBtn) {
 
 /*
 ========================================
-TEXT TO SPEECH
+DETECT SPEECH LANGUAGE
 ========================================
 */
 
@@ -3292,6 +4089,7 @@ function detectSpeechLanguage(
 
 
   const kinyarwandaWords = [
+
     "ndi",
     "iki",
     "ese",
@@ -3305,10 +4103,12 @@ function detectSpeechLanguage(
     "yego",
     "oya",
     "ni gute"
+
   ];
 
 
   const frenchWords = [
+
     "bonjour",
     "comment",
     "merci",
@@ -3317,6 +4117,7 @@ function detectSpeechLanguage(
     "quelle",
     "quel",
     "français"
+
   ];
 
 
@@ -3335,16 +4136,406 @@ function detectSpeechLanguage(
 
 
   if (hasKinyarwanda) {
+
     return "rw-RW";
+
   }
 
 
   if (hasFrench) {
+
     return "fr-FR";
+
   }
 
 
   return "en-US";
+
+}
+
+
+/*
+========================================
+VOICE SPEAKING DESIGN
+========================================
+*/
+
+function createVoiceSpeakingDesign() {
+
+  if (
+    document.getElementById(
+      "rwandaVoiceSpeaking"
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const indicator =
+    document.createElement(
+      "div"
+    );
+
+
+  indicator.id =
+    "rwandaVoiceSpeaking";
+
+
+  indicator.innerHTML = `
+
+    <div class="rwanda-voice-speaking-icon">
+
+      🔊
+
+    </div>
+
+
+    <div class="rwanda-voice-speaking-text">
+
+      <strong>
+        Rwanda AI
+      </strong>
+
+      <span>
+        is speaking...
+      </span>
+
+    </div>
+
+
+    <button
+      type="button"
+      id="rwandaStopSpeaking"
+      class="rwanda-stop-speaking"
+    >
+
+      Stop
+
+    </button>
+
+  `;
+
+
+  indicator.style.display =
+    "none";
+
+
+  document.body.appendChild(
+    indicator
+  );
+
+
+  const style =
+    document.createElement(
+      "style"
+    );
+
+
+  style.id =
+    "rwandaVoiceSpeakingStyles";
+
+
+  style.textContent = `
+
+    #rwandaVoiceSpeaking {
+
+      position: fixed;
+
+      left: 50%;
+
+      bottom: 22px;
+
+      transform:
+        translateX(-50%);
+
+      z-index: 100000;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 11px;
+
+      padding:
+        12px 14px;
+
+      background:
+        #ffffff;
+
+      border:
+        1px solid #dbeafe;
+
+      border-radius:
+        18px;
+
+      box-shadow:
+        0 10px 35px
+        rgba(0,0,0,0.16);
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      min-width:
+        245px;
+
+      max-width:
+        90vw;
+
+      box-sizing:
+        border-box;
+
+    }
+
+
+    .rwanda-voice-speaking-icon {
+
+      width:
+        40px;
+
+      height:
+        40px;
+
+      border-radius:
+        50%;
+
+      background:
+        #eff6ff;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      font-size:
+        20px;
+
+      animation:
+        rwandaVoicePulse
+        1.2s infinite;
+
+    }
+
+
+    .rwanda-voice-speaking-text {
+
+      flex:
+        1;
+
+      min-width:
+        0;
+
+      display:
+        flex;
+
+      flex-direction:
+        column;
+
+      gap:
+        2px;
+
+    }
+
+
+    .rwanda-voice-speaking-text strong {
+
+      font-size:
+        13px;
+
+      color:
+        #2563eb;
+
+    }
+
+
+    .rwanda-voice-speaking-text span {
+
+      font-size:
+        12px;
+
+      color:
+        #6b7280;
+
+    }
+
+
+    .rwanda-stop-speaking {
+
+      border:
+        none;
+
+      background:
+        #f3f4f6;
+
+      color:
+        #111827;
+
+      padding:
+        8px 12px;
+
+      border-radius:
+        10px;
+
+      font-size:
+        12px;
+
+      font-weight:
+        600;
+
+      cursor:
+        pointer;
+
+    }
+
+
+    .rwanda-stop-speaking:hover {
+
+      background:
+        #e5e7eb;
+
+    }
+
+
+    @keyframes rwandaVoicePulse {
+
+      0% {
+
+        transform:
+          scale(1);
+
+      }
+
+      50% {
+
+        transform:
+          scale(1.10);
+
+      }
+
+      100% {
+
+        transform:
+          scale(1);
+
+      }
+
+    }
+
+
+    @media (max-width: 600px) {
+
+      #rwandaVoiceSpeaking {
+
+        bottom:
+          15px;
+
+        min-width:
+          220px;
+
+        padding:
+          10px 12px;
+
+      }
+
+
+      .rwanda-voice-speaking-icon {
+
+        width:
+          36px;
+
+        height:
+          36px;
+
+      }
+
+    }
+
+  `;
+
+
+  document.head.appendChild(
+    style
+  );
+
+
+  const stopButton =
+    document.getElementById(
+      "rwandaStopSpeaking"
+    );
+
+
+  if (stopButton) {
+
+    stopButton.addEventListener(
+      "click",
+      () => {
+
+        window.speechSynthesis.cancel();
+
+
+        hideVoiceSpeakingDesign();
+
+      }
+    );
+
+  }
+
+}
+
+
+/*
+========================================
+SHOW VOICE SPEAKING
+========================================
+*/
+
+function showVoiceSpeakingDesign() {
+
+  createVoiceSpeakingDesign();
+
+
+  const indicator =
+    document.getElementById(
+      "rwandaVoiceSpeaking"
+    );
+
+
+  if (indicator) {
+
+    indicator.style.display =
+      "flex";
+
+  }
+
+}
+
+
+/*
+========================================
+HIDE VOICE SPEAKING
+========================================
+*/
+
+function hideVoiceSpeakingDesign() {
+
+  const indicator =
+    document.getElementById(
+      "rwandaVoiceSpeaking"
+    );
+
+
+  if (indicator) {
+
+    indicator.style.display =
+      "none";
+
+  }
 
 }
 
@@ -3381,6 +4572,9 @@ function speakText(text) {
 
 
   window.speechSynthesis.cancel();
+
+
+  showVoiceSpeakingDesign();
 
 
   const utterance =
@@ -3426,6 +4620,30 @@ function speakText(text) {
   }
 
 
+  utterance.onstart =
+    () => {
+
+      showVoiceSpeakingDesign();
+
+    };
+
+
+  utterance.onend =
+    () => {
+
+      hideVoiceSpeakingDesign();
+
+    };
+
+
+  utterance.onerror =
+    () => {
+
+      hideVoiceSpeakingDesign();
+
+    };
+
+
   window.speechSynthesis.speak(
     utterance
   );
@@ -3440,6 +4658,10 @@ INITIALIZE
 */
 
 createPastConversationsDesign();
+
+createVoiceSpeakingDesign();
+
+prepareConversationView();
 
 
 /*
