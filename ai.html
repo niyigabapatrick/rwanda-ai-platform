@@ -24,152 +24,613 @@
 ========================= */
 
 .ai-container {
-  width: 92%;
-  max-width: 800px;
-  margin: 30px auto;
-}
 
-.ai-panel {
-  background: #f5f5f5;
-  padding: 25px;
-  border-radius: 15px;
-}
+  width: 94%;
+  max-width: 850px;
+  margin: 25px auto;
 
-.ai-panel h2 {
-  color: #00A1DE;
 }
 
 
 /* =========================
-   QUESTION INPUT
+   AI PANEL
+========================= */
+
+.ai-panel {
+
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 18px;
+
+}
+
+
+/* =========================
+   ACCOUNT BAR
+========================= */
+
+.account-bar {
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+
+}
+
+
+.account-info {
+
+  font-size: 13px;
+  color: #555;
+  overflow-wrap: anywhere;
+
+}
+
+
+#logoutBtn {
+
+  border: none;
+  background: #d71920;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+
+}
+
+
+/* =========================
+   PAST CONVERSATIONS BUTTON
+========================= */
+
+#pastConversationsBtn {
+
+  width: 100%;
+  margin-bottom: 15px;
+  padding: 12px;
+
+  background: white;
+  color: #222;
+
+  border: 1px solid #ccc;
+  border-radius: 10px;
+
+  font-size: 15px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+}
+
+
+/* =========================
+   PAST CONVERSATIONS PANEL
+========================= */
+
+#conversationPanel {
+
+  display: none;
+
+  margin-bottom: 18px;
+
+  background: white;
+
+  border: 1px solid #d5d5d5;
+
+  border-radius: 14px;
+
+  padding: 14px;
+
+  box-shadow:
+    0 4px 14px
+    rgba(0,0,0,0.08);
+
+}
+
+
+.conversation-panel-title {
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  margin-bottom: 12px;
+
+  color: #00A1DE;
+
+}
+
+
+#conversationList {
+
+  max-height: 300px;
+
+  overflow-y: auto;
+
+}
+
+
+.conversation-item {
+
+  width: 100%;
+
+  display: block;
+
+  text-align: left;
+
+  padding: 12px;
+
+  margin-bottom: 8px;
+
+  background: #f7f7f7;
+
+  border: 1px solid #ddd;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+}
+
+
+.conversation-item:hover {
+
+  background: #eef9fd;
+
+}
+
+
+#closeConversationsBtn {
+
+  width: 100%;
+
+  margin-top: 8px;
+
+  padding: 10px;
+
+  background: #222;
+
+  color: white;
+
+  border: none;
+
+  border-radius: 9px;
+
+  cursor: pointer;
+
+}
+
+
+/* =========================
+   TITLE
+========================= */
+
+.ai-panel h2 {
+
+  color: #00A1DE;
+
+  margin-bottom: 8px;
+
+}
+
+
+/* =========================
+   CONVERSATION
+========================= */
+
+#answer {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 22px;
+
+  margin-top: 20px;
+
+  padding: 5px;
+
+  background: transparent;
+
+  min-height: 100px;
+
+  text-align: left;
+
+  overflow-wrap: break-word;
+
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+.rwanda-message {
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border-radius: 16px;
+
+  padding: 16px 18px;
+
+  line-height: 1.65;
+
+  word-break: break-word;
+
+}
+
+
+/* =========================
+   USER MESSAGE
+========================= */
+
+.user-message {
+
+  background: #ffffff;
+
+  border: 2px solid #d7d7d7;
+
+  color: #222;
+
+  align-self: flex-end;
+
+  max-width: 88%;
+
+  box-shadow:
+    0 2px 8px
+    rgba(0,0,0,0.06);
+
+}
+
+
+.user-message::before {
+
+  content: "You";
+
+  display: block;
+
+  font-size: 12px;
+
+  font-weight: bold;
+
+  color: #666;
+
+  margin-bottom: 7px;
+
+}
+
+
+/* =========================
+   AI MESSAGE
+========================= */
+
+.ai-message {
+
+  background: #ffffff;
+
+  border: 2px solid #00A1DE;
+
+  border-left: 7px solid #00A1DE;
+
+  color: #222;
+
+  width: 100%;
+
+  min-height: 150px;
+
+  padding: 24px 22px;
+
+  box-sizing: border-box;
+
+  box-shadow:
+    0 7px 22px
+    rgba(0,161,222,0.16);
+
+}
+
+
+.ai-message::before {
+
+  content: "🇷🇼 Rwanda AI";
+
+  display: block;
+
+  font-size: 14px;
+
+  font-weight: bold;
+
+  color: #00A1DE;
+
+  margin-bottom: 14px;
+
+}
+
+
+/* =========================
+   MESSAGE TEXT
+========================= */
+
+.message-text {
+
+  font-size: 17px;
+
+  line-height: 1.85;
+
+  white-space: pre-wrap;
+
+}
+
+
+/* =========================
+   ANSWER NUMBERING
+========================= */
+
+.message-text .answer-line {
+
+  display: block;
+
+  margin-bottom: 10px;
+
+}
+
+
+/* =========================
+   INPUT
 ========================= */
 
 #question {
+
   display: block !important;
 
   width: 100% !important;
 
   box-sizing: border-box !important;
 
-  padding: 14px !important;
+  padding: 15px !important;
 
   margin: 15px 0 10px 0 !important;
 
   border: 2px solid #222 !important;
 
-  border-radius: 10px !important;
+  border-radius: 12px !important;
 
-  font-size: 18px !important;
+  font-size: 17px !important;
 
   background: white !important;
 
   color: #222 !important;
+
+  outline: none;
+
+}
+
+
+#question:focus {
+
+  border-color: #00A1DE !important;
+
 }
 
 
 /* =========================
-   ASK AI BUTTON
+   CONTROLS
+========================= */
+
+.ai-controls {
+
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 10px;
+
+}
+
+
+/* =========================
+   ASK BUTTON
 ========================= */
 
 #askBtn {
 
-  display: block !important;
+  flex: 1;
 
-  visibility: visible !important;
+  min-height: 52px;
 
-  opacity: 1 !important;
+  padding: 14px 18px;
 
-  position: relative !important;
+  background: #00A1DE;
 
-  width: 100% !important;
+  color: white;
 
-  min-height: 52px !important;
+  border: none;
 
-  margin: 12px 0 20px 0 !important;
+  border-radius: 12px;
 
-  padding: 14px 20px !important;
+  font-size: 17px;
 
-  background: #00A1DE !important;
+  font-weight: bold;
 
-  color: white !important;
-
-  border: none !important;
-
-  border-radius: 10px !important;
-
-  font-size: 18px !important;
-
-  font-weight: bold !important;
-
-  cursor: pointer !important;
-
-  z-index: 9999 !important;
-
-  text-align: center !important;
-
-}
-
-
-/* BUTTON WHEN PRESSED */
-
-#askBtn:active {
-
-  transform: scale(0.98);
-
-}
-
-
-/* BUTTON WHEN DISABLED */
-
-#askBtn:disabled {
-
-  display: block !important;
-
-  visibility: visible !important;
-
-  opacity: 0.6 !important;
-
-  cursor: not-allowed !important;
+  cursor: pointer;
 
 }
 
 
 /* =========================
-   ANSWER
+   MICROPHONE
 ========================= */
 
-#answer {
+#voiceBtn {
 
-  display: block !important;
+  width: 58px;
 
-  margin-top: 15px !important;
+  min-height: 52px;
 
-  padding: 20px !important;
+  border: none;
 
-  background: white !important;
+  border-radius: 12px;
 
-  border-radius: 10px !important;
+  background: #222;
 
-  min-height: 100px !important;
+  color: white;
 
-  text-align: left !important;
+  font-size: 23px;
 
-  line-height: 1.6 !important;
+  cursor: pointer;
 
-  overflow-wrap: break-word !important;
+}
+
+
+#voiceBtn.voice-active {
+
+  background: #d71920;
+
+  animation:
+    voicePulse 1.2s infinite;
+
+}
+
+
+@keyframes voicePulse {
+
+  0% {
+
+    transform: scale(1);
+
+  }
+
+  50% {
+
+    transform: scale(1.06);
+
+  }
+
+  100% {
+
+    transform: scale(1);
+
+  }
 
 }
 
 
 /* =========================
-   AI ANSWER
+   VOICE STATUS
 ========================= */
 
-.ai-answer {
+#voiceStatus {
 
-  line-height: 1.7;
+  min-height: 20px;
 
-  font-size: 16px;
+  margin-top: 8px;
+
+  font-size: 13px;
+
+  color: #d71920;
+
+  text-align: center;
+
+}
+
+
+/* =========================
+   NEW CHAT
+========================= */
+
+#newChatBtn {
+
+  width: 100%;
+
+  margin-top: 12px;
+
+  padding: 12px;
+
+  border: 1px solid #ccc;
+
+  background: white;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-weight: bold;
+
+}
+
+
+/* =========================
+   STICKERS
+========================= */
+
+.sticker-area {
+
+  margin-top: 12px;
+
+}
+
+
+#stickerBtn {
+
+  width: 100%;
+
+  padding: 10px;
+
+  border: 1px solid #ccc;
+
+  background: white;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-weight: bold;
+
+}
+
+
+#stickerPicker {
+
+  display: none;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-top: 10px;
+
+  padding: 10px;
+
+  background: white;
+
+  border-radius: 10px;
+
+}
+
+
+.sticker-item {
+
+  border: none;
+
+  background: #f1f1f1;
+
+  border-radius: 10px;
+
+  padding: 8px 12px;
+
+  font-size: 22px;
+
+  cursor: pointer;
 
 }
 
@@ -180,14 +641,60 @@
 
 .ai-status {
 
-  margin-top: 15px;
+  margin-top: 12px;
 
-  font-size: 14px;
+  font-size: 13px;
 
   color: #666;
 
+  text-align: center;
+
 }
 
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+  .ai-panel {
+
+    padding: 15px;
+
+  }
+
+
+  .user-message {
+
+    max-width: 94%;
+
+  }
+
+
+  .message-text {
+
+    font-size: 16px;
+
+  }
+
+
+  .ai-message {
+
+    min-height: 170px;
+
+    padding: 22px 18px;
+
+  }
+
+
+  .account-bar {
+
+    align-items: flex-start;
+
+  }
+
+}
 
 </style>
 
@@ -197,10 +704,6 @@
 <body>
 
 
-<!-- =========================
-     HEADER
-========================= -->
-
 <header>
 
 <h1>
@@ -208,15 +711,11 @@
 </h1>
 
 <p>
-Your smart assistant built for Rwanda
+Your intelligent AI platform
 </p>
 
 </header>
 
-
-<!-- =========================
-     NAVIGATION
-========================= -->
 
 <nav>
 
@@ -232,12 +731,12 @@ AI Assistant
 Register Service
 </a>
 
+<a href="login.html">
+Login
+</a>
+
 </nav>
 
-
-<!-- =========================
-     HERO
-========================= -->
 
 <section class="hero">
 
@@ -246,21 +745,71 @@ Ask Rwanda AI
 </h2>
 
 <p>
-Ask questions about Rwanda,
-business, culture, education,
-technology and useful information.
+Talk or type. Rwanda AI will continue the conversation with you.
 </p>
 
 </section>
 
 
-<!-- =========================
-     AI CONTAINER
-========================= -->
-
 <main class="ai-container">
 
 <section class="ai-panel">
+
+
+<!-- ACCOUNT -->
+
+<div class="account-bar">
+
+<div
+  id="userEmail"
+  class="account-info"
+>
+Checking account...
+</div>
+
+<button
+  id="logoutBtn"
+  type="button"
+>
+Logout
+</button>
+
+</div>
+
+
+<!-- PAST CONVERSATIONS -->
+
+<button
+  id="pastConversationsBtn"
+  type="button"
+>
+🕘 Past Conversations
+</button>
+
+
+<div
+  id="conversationPanel"
+>
+
+<div class="conversation-panel-title">
+
+Past Conversations
+
+</div>
+
+<div
+  id="conversationList"
+>
+</div>
+
+<button
+  id="closeConversationsBtn"
+  type="button"
+>
+Close
+</button>
+
+</div>
 
 
 <h2>
@@ -269,13 +818,28 @@ technology and useful information.
 
 
 <p>
-Type your question below:
+Type your question or use the microphone.
 </p>
 
 
-<!-- =========================
-     QUESTION
-========================= -->
+<!-- CONVERSATION -->
+
+<div id="answer">
+
+<div class="rwanda-message ai-message">
+
+<div class="message-text">
+
+Rwanda AI is ready. Start your conversation.
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- QUESTION -->
 
 <input
   id="question"
@@ -285,54 +849,62 @@ Type your question below:
 >
 
 
-<!-- =========================
-     ASK BUTTON
-========================= -->
+<!-- CONTROLS -->
+
+<div class="ai-controls">
 
 <button
   id="askBtn"
   type="button"
 >
-🤖 Ask AI
+🤖 Ask Rwanda AI
+</button>
+
+<button
+  id="voiceBtn"
+  type="button"
+  title="Speak to Rwanda AI"
+>
+🎙️
+</button>
+
+</div>
+
+
+<div id="voiceStatus"></div>
+
+
+<!-- NEW CHAT -->
+
+<button
+  id="newChatBtn"
+  type="button"
+>
+➕ New Chat
 </button>
 
 
-<!-- =========================
-     ANSWER
-========================= -->
+<!-- STICKERS -->
 
-<div id="answer">
+<div class="sticker-area">
 
-<p>
-Your answer will appear here.
-</p>
+<button
+  id="stickerBtn"
+  type="button"
+>
+😊 Stickers
+</button>
+
+<div
+  id="stickerPicker"
+></div>
 
 </div>
 
-
-<!-- =========================
-     CONFIDENCE
-========================= -->
-
-<div id="aiConfidence">
-</div>
-
-
-<!-- =========================
-     SOURCE
-========================= -->
-
-<div id="aiSource">
-</div>
-
-
-<!-- =========================
-     STATUS
-========================= -->
 
 <div class="ai-status">
 
-Rwanda AI Gemini Engine
+Rwanda AI • Groq AI Engine • Voice + Conversations
 
 </div>
 
@@ -342,10 +914,6 @@ Rwanda AI Gemini Engine
 </main>
 
 
-<!-- =========================
-     FOOTER
-========================= -->
-
 <footer>
 
 <p>
@@ -354,10 +922,6 @@ Rwanda AI Gemini Engine
 
 </footer>
 
-
-<!-- =========================
-     MAIN JAVASCRIPT
-========================= -->
 
 <script
   type="module"

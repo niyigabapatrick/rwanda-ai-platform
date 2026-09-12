@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>Rwanda AI - Login</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+
+  margin: 0;
+
+  font-family:
+    Arial,
+    sans-serif;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f4f8fb,
+      #ffffff
+    );
+
+  min-height: 100vh;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+}
+
+
+.auth-container {
+
+  width: 92%;
+
+  max-width: 430px;
+
+}
+
+
+.auth-card {
+
+  background: white;
+
+  padding: 28px;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 8px 30px
+    rgba(0,0,0,0.10);
+
+}
+
+
+.logo {
+
+  text-align: center;
+
+  font-size: 28px;
+
+  font-weight: bold;
+
+  color: #00A1DE;
+
+  margin-bottom: 8px;
+
+}
+
+
+.subtitle {
+
+  text-align: center;
+
+  color: #666;
+
+  margin-bottom: 25px;
+
+}
+
+
+.auth-card h2 {
+
+  text-align: center;
+
+  margin-bottom: 20px;
+
+}
+
+
+input {
+
+  width: 100%;
+
+  padding: 14px;
+
+  margin-bottom: 12px;
+
+  border: 1px solid #ccc;
+
+  border-radius: 10px;
+
+  font-size: 16px;
+
+}
+
+
+input:focus {
+
+  outline: none;
+
+  border-color: #00A1DE;
+
+}
+
+
+button {
+
+  width: 100%;
+
+  padding: 14px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #00A1DE;
+
+  color: white;
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+  margin-top: 5px;
+
+}
+
+
+button:disabled {
+
+  opacity: 0.6;
+
+}
+
+
+.secondary-btn {
+
+  background: #222;
+
+  margin-top: 10px;
+
+}
+
+
+.link {
+
+  display: block;
+
+  text-align: center;
+
+  margin-top: 16px;
+
+  color: #00A1DE;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+}
+
+
+.message {
+
+  margin-top: 15px;
+
+  text-align: center;
+
+  font-size: 14px;
+
+  min-height: 20px;
+
+}
+
+
+.success {
+
+  color: green;
+
+}
+
+
+.error {
+
+  color: #d71920;
+
+}
+
+
+.hidden {
+
+  display: none;
+
+}
+
+
+.divider {
+
+  margin: 22px 0;
+
+  text-align: center;
+
+  color: #999;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="auth-container">
+
+
+<div class="auth-card">
+
+
+<div class="logo">
+
+🇷🇼 Rwanda AI
+
+</div>
+
+
+<div class="subtitle">
+
+Your intelligent AI platform
+
+</div>
+
+
+<!-- LOGIN -->
+
+
+<div id="loginSection">
+
+
+<h2>
+
+Login
+
+</h2>
+
+
+<input
+  id="loginEmail"
+  type="email"
+  placeholder="Email address"
+  autocomplete="email"
+>
+
+
+<input
+  id="loginPassword"
+  type="password"
+  placeholder="Password"
+  autocomplete="current-password"
+>
+
+
+<button
+  id="loginBtn"
+  type="button"
+>
+
+Login
+
+</button>
+
+
+<div
+  id="forgotPassword"
+  class="link"
+>
+
+Forgot password?
+
+</div>
+
+
+<div class="divider">
+
+Don't have an account?
+
+</div>
+
+
+<button
+  id="showSignupBtn"
+  class="secondary-btn"
+  type="button"
+>
+
+Create Account
+
+</button>
+
+
+</div>
+
+
+<!-- SIGN UP -->
+
+
+<div
+  id="signupSection"
+  class="hidden"
+>
+
+
+<h2>
+
+Create Account
+
+</h2>
+
+
+<input
+  id="signupEmail"
+  type="email"
+  placeholder="Email address"
+  autocomplete="email"
+>
+
+
+<input
+  id="signupPassword"
+  type="password"
+  placeholder="Create password"
+  autocomplete="new-password"
+>
+
+
+<input
+  id="signupPassword2"
+  type="password"
+  placeholder="Confirm password"
+  autocomplete="new-password"
+>
+
+
+<button
+  id="signupBtn"
+  type="button"
+>
+
+Create Account
+
+</button>
+
+
+<div class="divider">
+
+Already have an account?
+
+</div>
+
+
+<button
+  id="showLoginBtn"
+  class="secondary-btn"
+  type="button"
+>
+
+Back to Login
+
+</button>
+
+
+</div>
+
+
+<!-- MESSAGE -->
+
+
+<div
+  id="authMessage"
+  class="message"
+>
+</div>
+
+
+</div>
+
+</div>
+
+
+<script
+  type="module"
+  src="login.js">
+</script>
+
+
+</body>
+
+</html>
