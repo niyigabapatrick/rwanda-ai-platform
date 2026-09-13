@@ -1,192 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Rwanda AI Platform</title>
-
-<link rel="stylesheet"
-href="style.css">
-
-</head>
-
-
-<body>
-
-
-<!-- ========================================
+<title>Rwanda AI Platform</title><!-- PWA MANIFEST --><link rel="manifest" href="./manifest.json"><!-- PWA THEME --><meta name="theme-color" content="#000000"><!-- MOBILE APP SUPPORT --><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black"><!-- STYLESHEET --><link rel="stylesheet"
+href="style.css"></head><body><!-- ========================================
 HEADER
-======================================== -->
-
-<header>
-
-<h1>🇷🇼 Rwanda AI Platform</h1>
-
-<p>
+======================================== --><header><h1>🇷🇼 Rwanda AI Platform</h1><p>
 Your smart AI assistant built for Rwanda
-</p>
-
-</header>
-
-
-<!-- ========================================
+</p></header><!-- ========================================
 NAVIGATION
-======================================== -->
-
-<nav>
-
-<a href="index.html">
+======================================== --><nav><a href="index.html">
 Home
-</a>
-
-<a href="ai.html">
+</a><a href="ai.html">
 AI Assistant
-</a>
-
-<a href="ai-voice.html">
+</a><a href="ai-voice.html">
 🎙️ Voice AI
-</a>
-
-<a href="login.html">
+</a><a href="login.html">
 🔐 Login
-</a>
-
-</nav>
-
-
-<!-- ========================================
+</a></nav><!-- ========================================
 HERO
-======================================== -->
-
-<section class="hero">
-
-<h2>
+======================================== --><section class="hero"><h2>
 Welcome to Rwanda AI Platform
-</h2>
-
-<p>
+</h2><p>
 Get intelligent AI assistance focused on Rwanda.
-</p>
-
-</section>
-
-
-<!-- ========================================
+</p></section><!-- ========================================
 AI CARDS
-======================================== -->
-
-<section class="cards">
-
-
-<!-- ========================================
+======================================== --><section class="cards"><!-- ========================================
 AI ASSISTANT
-======================================== -->
-
-<div class="card">
-
-<h3>
+======================================== --><div class="card"><h3>
 🤖 Rwanda AI Assistant
-</h3>
-
-<p>
+</h3><p>
 Ask questions about Rwanda, culture, education,
 business, technology and useful information.
-</p>
-
-<a href="ai.html">
-
-<button>
+</p><a href="ai.html"><button>
 Open AI Assistant
-</button>
-
-</a>
-
-</div>
-
-
-<!-- ========================================
+</button></a></div><!-- ========================================
 VOICE AI
-======================================== -->
-
-<div class="card">
-
-<h3>
+======================================== --><div class="card"><h3>
 🎙️ Rwanda Voice AI
-</h3>
-
-<p>
+</h3><p>
 Speak your question using your microphone
 and get an intelligent answer from Rwanda AI.
-</p>
-
-<a href="ai-voice.html">
-
-<button>
+</p><a href="ai-voice.html"><button>
 Open Voice AI
-</button>
-
-</a>
-
-</div>
-
-
-<!-- ========================================
+</button></a></div><!-- ========================================
 LOGIN
-======================================== -->
-
-<div class="card">
-
-<h3>
+======================================== --><div class="card"><h3>
 🔐 Rwanda AI Account
-</h3>
-
-<p>
+</h3><p>
 Login to your Rwanda AI account and access
 your personal AI conversations and features.
-</p>
-
-<a href="login.html">
-
-<button>
+</p><a href="login.html"><button>
 Login
-</button>
-
-</a>
-
-</div>
-
-
-</section>
-
-
-<!-- ========================================
+</button></a></div></section><!-- ========================================
 FOOTER
-======================================== -->
-
-<footer>
-
-<p>
+======================================== --><footer><p>
 © 2026 Rwanda AI Platform
-</p>
-
-</footer>
-
-
-<!-- ========================================
+</p></footer><!-- ========================================
 MAIN JAVASCRIPT
-======================================== -->
-
-<script
+======================================== --><script
 type="module"
 src="script.js">
-</script>
+</script><!-- ========================================
+SERVICE WORKER REGISTRATION
+======================================== --><script>
 
+if ("serviceWorker" in navigator) {
 
-</body>
+  window.addEventListener("load", function () {
 
-</html>
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(function () {
+
+        console.log(
+          "Rwanda AI Service Worker registered successfully."
+        );
+
+      })
+      .catch(function (error) {
+
+        console.error(
+          "Rwanda AI Service Worker registration failed:",
+          error
+        );
+
+      });
+
+  });
+
+}
+
+</script></body></html>
