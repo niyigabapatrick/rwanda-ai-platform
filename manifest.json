@@ -1,8 +1,10 @@
 {
+"id": "./",
 "name": "Rwanda AI Platform",
 "short_name": "Rwanda AI",
 "description": "Rwanda AI Platform - AI Assistant and Service & Supplier Finder",
-"start_url": "./index.html",
+"start_url": "./",
+"scope": "./",
 "display": "standalone",
 "background_color": "#ffffff",
 "theme_color": "#000000",
