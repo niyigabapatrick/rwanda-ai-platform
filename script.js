@@ -58,6 +58,30 @@ const GROQ_URL =
 
 /*
 ========================================
+OFFICIAL RWANDA AI INTRODUCTION
+========================================
+*/
+
+const RWANDA_AI_INTRODUCTION =
+  "I am Rwanda AI, an artificial intelligence platform made in Rwanda by Mr Patrick NIYIGABA, known as Cobra. I am designed to provide information, answer questions and assist users across many topics, with a strong focus on Science, Astronomy and World Geography.";
+
+
+/*
+========================================
+OLD INTRODUCTION
+========================================
+
+This is kept only as a protection against
+old/stale backend answers.
+========================================
+*/
+
+const OLD_RWANDA_AI_INTRODUCTION =
+  "I am Rwanda AI, an artificial intelligence platform made in Rwanda by Mr Patrick NIYIGABA, known as Cobra. I am designed to provide information, answer questions and assist users on many topics, especially topics related to Rwanda.";
+
+
+/*
+========================================
 DOM
 ========================================
 */
@@ -518,6 +542,32 @@ function cleanAIAnswer(text) {
 
   /*
   ========================================
+  PROTECT AGAINST OLD INTRODUCTION
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      OLD_RWANDA_AI_INTRODUCTION,
+      RWANDA_AI_INTRODUCTION
+    );
+
+
+  /*
+  ========================================
+  REMOVE OLD INTRODUCTION VARIATIONS
+  ========================================
+  */
+
+  answer =
+    answer.replace(
+      /I am Rwanda AI, an artificial intelligence platform made in Rwanda by Mr Patrick NIYIGABA, known as Cobra\.\s*I am designed to provide information, answer questions and assist users on many topics, especially topics related to Rwanda\./gi,
+      RWANDA_AI_INTRODUCTION
+    );
+
+
+  /*
+  ========================================
   REMOVE MARKDOWN HEADINGS
   ========================================
   */
@@ -972,11 +1022,6 @@ function prepareConversationView() {
   }
 
 
-  /*
-  Conversation stays inside
-  its own scroll area.
-  */
-
   answerBox.style.maxHeight =
     "70vh";
 
@@ -1025,25 +1070,7 @@ function scrollToCurrentAnswer(
   setTimeout(
     () => {
 
-      /*
-      ====================================
-      IMPORTANT
-      ====================================
-
-      DO NOT use scrollIntoView().
-
-      That moves the whole webpage.
-
-      We only scroll INSIDE answerBox.
-      */
-
-
       if (targetElement) {
-
-        /*
-        Find the exact position of the
-        current answer inside answerBox.
-        */
 
         const boxRect =
           answerBox.getBoundingClientRect();
@@ -1058,10 +1085,6 @@ function scrollToCurrentAnswer(
           boxRect.top +
           answerBox.scrollTop;
 
-
-        /*
-        CURRENT ANSWER STARTS AT TOP
-        */
 
         answerBox.scrollTo({
 
@@ -1082,11 +1105,6 @@ function scrollToCurrentAnswer(
       }
 
 
-      /*
-      For a simple answer without
-      conversation messages.
-      */
-
       answerBox.scrollTo({
 
         top:
@@ -1100,6 +1118,7 @@ function scrollToCurrentAnswer(
     },
 
     80
+
   );
 
 }
@@ -1133,10 +1152,6 @@ function renderAnswer(text) {
     "rwanda-ai-answer-active"
   );
 
-
-  /*
-  Answer starts at TOP.
-  */
 
   scrollToCurrentAnswer();
 
@@ -1182,23 +1197,11 @@ function renderConversation(
         );
 
 
-      /*
-      ====================================
-      BASE MESSAGE
-      ====================================
-      */
-
       wrapper.className =
         message.role === "user"
           ? "rwanda-user-message"
           : "rwanda-ai-message";
 
-
-      /*
-      ====================================
-      LABEL
-      ====================================
-      */
 
       const label =
         document.createElement(
@@ -1216,12 +1219,6 @@ function renderConversation(
           : "RWANDA AI";
 
 
-      /*
-      ====================================
-      CONTENT
-      ====================================
-      */
-
       const content =
         document.createElement(
           "div"
@@ -1237,12 +1234,6 @@ function renderConversation(
           message.content || ""
         );
 
-
-      /*
-      ====================================
-      USER MESSAGE
-      ====================================
-      */
 
       if (
         message.role === "user"
@@ -1269,12 +1260,6 @@ function renderConversation(
 
       }
 
-
-      /*
-      ====================================
-      AI ANSWER
-      ====================================
-      */
 
       if (
         message.role === "assistant"
@@ -1308,22 +1293,11 @@ function renderConversation(
           "0 5px 18px rgba(0, 0, 0, 0.09)";
 
 
-        /*
-        Keep reference to the
-        current/latest AI answer.
-        */
-
         lastAssistantElement =
           wrapper;
 
       }
 
-
-      /*
-      ====================================
-      LABEL STYLE
-      ====================================
-      */
 
       label.style.fontSize =
         "12px";
@@ -1355,12 +1329,6 @@ function renderConversation(
 
       }
 
-
-      /*
-      ====================================
-      CONTENT STYLE
-      ====================================
-      */
 
       content.style.fontSize =
         "15px";
@@ -1400,18 +1368,6 @@ function renderConversation(
     "rwanda-ai-answer-active"
   );
 
-
-  /*
-  ========================================
-  VERY IMPORTANT
-  ========================================
-
-  The latest/current Rwanda AI answer
-  is placed at the TOP of the
-  conversation viewport.
-
-  The whole webpage does NOT scroll.
-  */
 
   if (lastAssistantElement) {
 
@@ -1478,15 +1434,37 @@ async function callBackend(
 
             systemInstruction: `
 
-You are Rwanda AI.
+You are the intelligent assistant of Rwanda AI Platform.
 
-You are Rwanda AI Platform's intelligent assistant.
+Rwanda AI was made and developed in Rwanda by Mr Patrick NIYIGABA, also known as Cobra.
 
-You were made and developed in Rwanda by Mr Patrick NIYIGABA, also known as Cobra.
+IMPORTANT IDENTITY RULE:
 
-Always identify yourself as Rwanda AI when identity is relevant.
+Only give the official Rwanda AI introduction when the user explicitly asks about your identity, such as:
+
+Who are you?
+What is Rwanda AI?
+Tell me about Rwanda AI.
+Who created Rwanda AI?
+What is this platform?
+
+When the user explicitly asks who you are, use this official introduction:
+
+${RWANDA_AI_INTRODUCTION}
+
+For normal questions, DO NOT introduce yourself.
+
+For normal questions, answer the user's question directly.
+
+DO NOT repeat the Rwanda AI introduction at the beginning of normal answers.
+
+DO NOT say that Rwanda AI is mainly focused on Rwanda-related topics.
+
+The platform can answer questions across many topics, with a strong focus on Science, Astronomy and World Geography.
 
 Do not claim to be ChatGPT, Gemini, Claude, or another AI.
+
+If the user asks who created Rwanda AI, identify Mr Patrick NIYIGABA, also known as Cobra.
 
 Answer naturally and accurately.
 
@@ -1648,24 +1626,12 @@ async function askRwandaAI(
 
   try {
 
-    /*
-    ======================================
-    CREATE CONVERSATION IF NEEDED
-    ======================================
-    */
-
     if (!currentConversationId) {
 
       await createConversation();
 
     }
 
-
-    /*
-    ======================================
-    USER MESSAGE
-    ======================================
-    */
 
     const userMessage = {
 
@@ -1694,12 +1660,6 @@ async function askRwandaAI(
     );
 
 
-    /*
-    ======================================
-    THINKING MESSAGE
-    ======================================
-    */
-
     conversationMessages.push({
 
       role:
@@ -1716,23 +1676,11 @@ async function askRwandaAI(
     );
 
 
-    /*
-    ======================================
-    CALL BACKEND
-    ======================================
-    */
-
     const answer =
       await callBackend(
         question
       );
 
-
-    /*
-    ======================================
-    REMOVE THINKING
-    ======================================
-    */
 
     conversationMessages =
       conversationMessages.filter(
@@ -1741,12 +1689,6 @@ async function askRwandaAI(
           "Rwanda AI is thinking..."
       );
 
-
-    /*
-    ======================================
-    ADD REAL ANSWER
-    ======================================
-    */
 
     conversationMessages.push({
 
@@ -1759,34 +1701,16 @@ async function askRwandaAI(
     });
 
 
-    /*
-    ======================================
-    SAVE ANSWER
-    ======================================
-    */
-
     await saveMessage(
       "assistant",
       answer
     );
 
 
-    /*
-    ======================================
-    RENDER CURRENT ANSWER
-    ======================================
-    */
-
     renderConversation(
       conversationMessages
     );
 
-
-    /*
-    ======================================
-    VOICE ANSWER
-    ======================================
-    */
 
     if (voiceQuestion) {
 
@@ -1796,12 +1720,6 @@ async function askRwandaAI(
 
     }
 
-
-    /*
-    ======================================
-    CLEAR INPUT
-    ======================================
-    */
 
     if (questionInput) {
 
@@ -3890,7 +3808,19 @@ function startRecognitionSession() {
 
 
   if (!recognition) {
+
+    if (voiceStatus) {
+
+      voiceStatus.textContent =
+        "Voice recognition is not supported on this browser.";
+
+    }
+
+    voiceButtonListening =
+      false;
+
     return;
+
   }
 
 
@@ -3904,6 +3834,9 @@ function startRecognitionSession() {
       "Recognition start error:",
       error
     );
+
+    voiceButtonListening =
+      false;
 
   }
 
