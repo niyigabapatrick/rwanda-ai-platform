@@ -1,3 +1,14 @@
+/*
+========================================
+RWANDA AI PLATFORM
+PRIVATE KNOWLEDGE DATABASE
+STRICT TOPIC SEARCH
+RESULTS LIST
+BACK TO RESULTS
+========================================
+*/
+
+
 import {
   db
 } from "./firebase.js";
@@ -10,47 +21,43 @@ import {
 
 
 const questionInput =
-  document.getElementById(
-    "questionInput"
-  );
-
+  document.getElementById("questionInput");
 
 const searchButton =
-  document.getElementById(
-    "searchButton"
-  );
-
+  document.getElementById("searchButton");
 
 const status =
-  document.getElementById(
-    "status"
-  );
-
+  document.getElementById("status");
 
 const result =
-  document.getElementById(
-    "result"
-  );
-
+  document.getElementById("result");
 
 const resultQuestion =
-  document.getElementById(
-    "resultQuestion"
-  );
-
+  document.getElementById("resultQuestion");
 
 const resultAnswer =
-  document.getElementById(
-    "resultAnswer"
-  );
+  document.getElementById("resultAnswer");
 
 
 let knowledgeData = [];
 
 
-/* ==================================================
-   STOP WORDS
-================================================== */
+/*
+========================================
+STORE LAST SEARCH RESULTS
+========================================
+*/
+
+let lastSearchResults = [];
+
+let lastSearchQuestion = "";
+
+
+/*
+========================================
+STOP WORDS
+========================================
+*/
 
 const stopWords = new Set([
 
@@ -99,10 +106,6 @@ const stopWords = new Set([
   "information",
   "know",
 
-  /*
-  Kinyarwanda common words
-  */
-
   "ni",
   "iki",
   "ikihe",
@@ -115,27 +118,135 @@ const stopWords = new Set([
   "rya",
   "ya",
   "za",
-  "y'u",
-  "u",
   "na",
-  "n'iki",
   "ese",
   "mbwira",
   "mpa",
   "amakuru",
-  "hehe",
   "he",
-  "iki"
+  "hehe",
+  "nde",
+  "igihe"
+
 ]);
 
 
-/* ==================================================
-   NORMALIZE TEXT
-================================================== */
+/*
+========================================
+TOPIC GROUPS
+========================================
+*/
+
+const topicGroups = {
+
+  mountain: [
+
+    "mountain",
+    "mountains",
+    "mount",
+    "misozi",
+    "umusozi",
+    "imisozi",
+    "highest mountain",
+    "major mountain",
+    "major mountains",
+    "mountainous"
+
+  ],
+
+
+  lake: [
+
+    "lake",
+    "lakes",
+    "ikiyaga",
+    "ibiyaga"
+
+  ],
+
+
+  river: [
+
+    "river",
+    "rivers",
+    "uruzi",
+    "umugezi",
+    "imigezi"
+
+  ],
+
+
+  capital: [
+
+    "capital",
+    "capital city",
+    "umurwa mukuru",
+    "umurwa"
+
+  ],
+
+
+  founder: [
+
+    "founder",
+    "founders",
+    "founded",
+    "founding",
+    "uwashinze",
+    "washinze",
+    "uwatangije"
+
+  ],
+
+
+  language: [
+
+    "language",
+    "languages",
+    "official language",
+    "official languages",
+    "ururimi",
+    "indimi",
+    "ururimi rwemewe",
+    "indimi zemewe"
+
+  ],
+
+
+  independence: [
+
+    "independence",
+    "independent",
+    "ubwigenge",
+    "kwigenga"
+
+  ],
+
+
+  animal: [
+
+    "animal",
+    "animals",
+    "national animal",
+    "inyamaswa",
+    "inyamaswa y'igihugu",
+    "inyamaswa z'igihugu"
+
+  ]
+
+};
+
+
+/*
+========================================
+NORMALIZE TEXT
+========================================
+*/
 
 function normalizeText(text) {
 
   return String(text || "")
+
     .toLowerCase()
 
     .replace(
@@ -153,11 +264,13 @@ function normalizeText(text) {
 }
 
 
-/* ==================================================
-   GET IMPORTANT WORDS
-================================================== */
+/*
+========================================
+GET WORDS
+========================================
+*/
 
-function getImportantWords(text) {
+function getWords(text) {
 
   const normalized =
     normalizeText(text);
@@ -170,12 +283,11 @@ function getImportantWords(text) {
   }
 
 
-  const words =
-    normalized.split(" ");
+  return normalized
 
+    .split(" ")
 
-  return words.filter(
-    word => {
+    .filter(word => {
 
       if (!word) {
 
@@ -204,15 +316,16 @@ function getImportantWords(text) {
 
       return true;
 
-    }
-  );
+    });
 
 }
 
 
-/* ==================================================
-   SIMPLE WORD NORMALIZATION
-================================================== */
+/*
+========================================
+SIMPLIFY WORD
+========================================
+*/
 
 function simplifyWord(word) {
 
@@ -231,6 +344,7 @@ function simplifyWord(word) {
 
   }
 
+
   else if (
     w.length > 5 &&
     w.endsWith("es")
@@ -240,6 +354,7 @@ function simplifyWord(word) {
       w.slice(0, -2);
 
   }
+
 
   else if (
     w.length > 4 &&
@@ -257,56 +372,178 @@ function simplifyWord(word) {
 }
 
 
-/* ==================================================
-   PREPARE WORDS
-================================================== */
+/*
+========================================
+GET RECORD TEXT
+========================================
+*/
 
-function prepareWords(text) {
+function getRecordText(item) {
 
-  return getImportantWords(text)
-    .map(
-      simplifyWord
-    );
+  let text = "";
+
+
+  if (item.question) {
+
+    text +=
+      " " +
+      item.question;
+
+  }
+
+
+  if (item.keywords) {
+
+    if (
+      Array.isArray(item.keywords)
+    ) {
+
+      text +=
+        " " +
+        item.keywords.join(" ");
+
+    }
+
+    else {
+
+      text +=
+        " " +
+        String(item.keywords);
+
+    }
+
+  }
+
+
+  if (item.allKeywords) {
+
+    if (
+      Array.isArray(item.allKeywords)
+    ) {
+
+      text +=
+        " " +
+        item.allKeywords.join(" ");
+
+    }
+
+    else {
+
+      text +=
+        " " +
+        String(item.allKeywords);
+
+    }
+
+  }
+
+
+  return normalizeText(text);
 
 }
 
 
-/* ==================================================
-   WORD SIMILARITY
-================================================== */
+/*
+========================================
+DETECT USER TOPIC
+========================================
+*/
 
-function wordsAreSimilar(
-  word1,
-  word2
+function detectUserTopic(question) {
+
+  const normalized =
+    normalizeText(question);
+
+
+  const topicNames =
+    Object.keys(topicGroups);
+
+
+  /*
+  Check all topic groups.
+  */
+
+  for (
+    const topic of topicNames
+  ) {
+
+    const phrases =
+      topicGroups[topic];
+
+
+    for (
+      const phrase of phrases
+    ) {
+
+      const normalizedPhrase =
+        normalizeText(phrase);
+
+
+      if (
+        normalized.includes(
+          normalizedPhrase
+        )
+      ) {
+
+        return topic;
+
+      }
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/*
+========================================
+CHECK RECORD TOPIC
+========================================
+*/
+
+function recordBelongsToTopic(
+  item,
+  topic
 ) {
 
-  if (
-    !word1 ||
-    !word2
-  ) {
+  if (!topic) {
 
     return false;
 
   }
 
 
-  if (
-    word1 === word2
-  ) {
+  const recordText =
+    getRecordText(item);
 
-    return true;
+
+  const phrases =
+    topicGroups[topic];
+
+
+  if (!phrases) {
+
+    return false;
 
   }
 
 
-  if (
-    word1.length >= 5 &&
-    word2.length >= 5
+  for (
+    const phrase of phrases
   ) {
 
+    const normalizedPhrase =
+      normalizeText(phrase);
+
+
     if (
-      word1.startsWith(word2) ||
-      word2.startsWith(word1)
+      recordText.includes(
+        normalizedPhrase
+      )
     ) {
 
       return true;
@@ -321,23 +558,61 @@ function wordsAreSimilar(
 }
 
 
-/* ==================================================
-   CALCULATE WORD MATCH
-================================================== */
+/*
+========================================
+GET USER SEARCH WORDS
+========================================
+*/
 
-function calculateWordMatch(
-  userWords,
-  databaseWords
+function getUserSearchWords(
+  question
+) {
+
+  return getWords(question)
+
+    .map(
+      simplifyWord
+    );
+
+}
+
+
+/*
+========================================
+CALCULATE TOPIC SCORE
+========================================
+*/
+
+function calculateTopicScore(
+  question,
+  item,
+  topic
 ) {
 
   if (
-    userWords.length === 0 ||
-    databaseWords.length === 0
+    !recordBelongsToTopic(
+      item,
+      topic
+    )
   ) {
 
     return 0;
 
   }
+
+
+  const userWords =
+    getUserSearchWords(
+      question
+    );
+
+
+  const recordWords =
+    getWords(
+      getRecordText(item)
+    ).map(
+      simplifyWord
+    );
 
 
   let matched = 0;
@@ -347,12 +622,41 @@ function calculateWordMatch(
     userWord => {
 
       const found =
-        databaseWords.some(
-          databaseWord =>
-            wordsAreSimilar(
-              userWord,
-              databaseWord
-            )
+        recordWords.some(
+          recordWord => {
+
+            return (
+
+              recordWord ===
+              userWord
+
+              ||
+
+              (
+
+                userWord.length >= 5 &&
+
+                recordWord.length >= 5 &&
+
+                (
+
+                  recordWord.startsWith(
+                    userWord
+                  )
+
+                  ||
+
+                  userWord.startsWith(
+                    recordWord
+                  )
+
+                )
+
+              )
+
+            );
+
+          }
         );
 
 
@@ -366,430 +670,442 @@ function calculateWordMatch(
   );
 
 
-  return (
-    matched /
-    userWords.length
-  );
-
-}
-
-
-/* ==================================================
-   KEYWORD MATCH
-================================================== */
-
-function calculateKeywordScore(
-  userWords,
-  keywords
-) {
-
-  if (!keywords) {
-
-    return 0;
-
-  }
-
-
-  let keywordText = "";
+  let score = 1;
 
 
   if (
-    Array.isArray(keywords)
+    matched > 0
   ) {
 
-    keywordText =
-      keywords.join(" ");
+    score +=
+      matched /
+      Math.max(
+        userWords.length,
+        1
+      );
 
   }
-
-  else {
-
-    keywordText =
-      String(keywords);
-
-  }
-
-
-  const keywordWords =
-    prepareWords(
-      keywordText
-    );
-
-
-  return calculateWordMatch(
-    userWords,
-    keywordWords
-  );
-
-}
-
-
-/* ==================================================
-   ALL POSSIBLE KEYWORDS SCORE
-================================================== */
-
-function calculateAllKeywordsScore(
-  userQuestion,
-  allKeywords
-) {
-
-  if (
-    !allKeywords
-  ) {
-
-    return 0;
-
-  }
-
-
-  let phrases = [];
 
 
   /*
-  Firestore stores allKeywords
-  as an array.
+  Exact question gets priority.
   */
 
   if (
-    Array.isArray(allKeywords)
-  ) {
-
-    phrases =
-      allKeywords;
-
-  }
-
-  else {
-
-    phrases = [
-      String(allKeywords)
-    ];
-
-  }
-
-
-  if (
-    phrases.length === 0
-  ) {
-
-    return 0;
-
-  }
-
-
-  let highestScore = 0;
-
-
-  const userWords =
-    prepareWords(
-      userQuestion
-    );
-
-
-  /*
-  Compare the user's question
-  with every possible question
-  variation.
-  */
-
-  phrases.forEach(
-    phrase => {
-
-      const phraseWords =
-        prepareWords(
-          phrase
-        );
-
-
-      const score =
-        calculateWordMatch(
-          userWords,
-          phraseWords
-        );
-
-
-      if (
-        score >
-        highestScore
-      ) {
-
-        highestScore =
-          score;
-
-      }
-
-    }
-  );
-
-
-  return highestScore;
-
-}
-
-
-/* ==================================================
-   QUESTION SCORE
-================================================== */
-
-function calculateQuestionScore(
-  userQuestion,
-  databaseQuestion
-) {
-
-  const userWords =
-    prepareWords(
-      userQuestion
-    );
-
-
-  const databaseWords =
-    prepareWords(
-      databaseQuestion
-    );
-
-
-  return calculateWordMatch(
-    userWords,
-    databaseWords
-  );
-
-}
-
-
-/* ==================================================
-   EXACT MATCH
-================================================== */
-
-function isExactMatch(
-  userQuestion,
-  databaseQuestion
-) {
-
-  return normalizeText(
-    userQuestion
-  ) ===
-  normalizeText(
-    databaseQuestion
-  );
-
-}
-
-
-/* ==================================================
-   SEARCH SCORE
-================================================== */
-
-function calculateTotalScore(
-  userQuestion,
-  item
-) {
-
-  const databaseQuestion =
-    item.question || "";
-
-
-  const keywords =
-    item.keywords || "";
-
-
-  const allKeywords =
-    item.allKeywords || [];
-
-
-  /*
-  EXACT QUESTION
-  */
-
-  if (
-    isExactMatch(
-      userQuestion,
-      databaseQuestion
+    normalizeText(question) ===
+    normalizeText(
+      item.question || ""
     )
   ) {
 
-    return 1.5;
+    score += 10;
 
   }
 
 
-  /*
-  QUESTION SIMILARITY
-  */
-
-  const questionScore =
-    calculateQuestionScore(
-      userQuestion,
-      databaseQuestion
-    );
-
-
-  /*
-  OLD KEYWORDS
-  */
-
-  const userWords =
-    prepareWords(
-      userQuestion
-    );
-
-
-  const keywordScore =
-    calculateKeywordScore(
-      userWords,
-      keywords
-    );
-
-
-  /*
-  ALL POSSIBLE KEYWORDS
-  */
-
-  const allKeywordsScore =
-    calculateAllKeywordsScore(
-      userQuestion,
-      allKeywords
-    );
-
-
-  /*
-  WEIGHTED SEARCH
-
-  Question:
-  40%
-
-  Old keywords:
-  20%
-
-  All possible keywords:
-  40%
-  */
-
-  const totalScore =
-    (
-      questionScore * 0.40
-    ) +
-    (
-      keywordScore * 0.20
-    ) +
-    (
-      allKeywordsScore * 0.40
-    );
-
-
-  return totalScore;
+  return score;
 
 }
 
 
-/* ==================================================
-   FIND BEST ANSWER
-================================================== */
+/*
+========================================
+SEARCH KNOWLEDGE
+========================================
+*/
 
 function searchKnowledge(
   question
 ) {
 
+  const topic =
+    detectUserTopic(
+      question
+    );
+
+
+  console.log(
+    "User question:",
+    question
+  );
+
+
+  console.log(
+    "Detected topic:",
+    topic
+  );
+
+
+  /*
+  ========================================
+  STRICT TOPIC SEARCH
+  ========================================
+  */
+
+  if (topic) {
+
+    const results =
+      knowledgeData
+
+        .map(item => {
+
+          return {
+
+            item: item,
+
+            score:
+              calculateTopicScore(
+                question,
+                item,
+                topic
+              )
+
+          };
+
+        })
+
+        .filter(
+          result =>
+            result.score > 0
+        );
+
+
+    results.sort(
+      (a, b) =>
+        b.score -
+        a.score
+    );
+
+
+    console.log(
+      "Strict topic results:",
+      results
+    );
+
+
+    return results;
+
+  }
+
+
+  /*
+  ========================================
+  FALLBACK SEARCH
+  ========================================
+  */
+
+  const userWords =
+    getUserSearchWords(
+      question
+    );
+
+
   if (
-    !question ||
-    knowledgeData.length === 0
+    userWords.length === 0
   ) {
 
-    return null;
+    return [];
 
   }
 
 
   const results =
-    knowledgeData.map(
-      item => {
+    knowledgeData
+
+      .map(item => {
+
+        const recordWords =
+          getWords(
+            getRecordText(item)
+          ).map(
+            simplifyWord
+          );
+
+
+        let matched = 0;
+
+
+        userWords.forEach(
+          userWord => {
+
+            const found =
+              recordWords.some(
+                recordWord => {
+
+                  return (
+
+                    recordWord ===
+                    userWord
+
+                    ||
+
+                    (
+
+                      userWord.length >= 5 &&
+
+                      recordWord.length >= 5 &&
+
+                      (
+
+                        recordWord.startsWith(
+                          userWord
+                        )
+
+                        ||
+
+                        userWord.startsWith(
+                          recordWord
+                        )
+
+                      )
+
+                    )
+
+                  );
+
+                }
+              );
+
+
+            if (found) {
+
+              matched++;
+
+            }
+
+          }
+        );
+
 
         return {
 
           item: item,
 
           score:
-            calculateTotalScore(
-              question,
-              item
-            )
+            matched /
+            userWords.length
 
         };
 
-      }
-    );
+      })
 
 
-  /*
-  HIGHEST SCORE FIRST
-  */
+      .filter(
+        result =>
+          result.score > 0
+      );
+
 
   results.sort(
     (a, b) =>
-      b.score - a.score
+      b.score -
+      a.score
   );
 
 
-  console.log(
-    "Knowledge search results:",
-    results
-  );
-
-
-  const best =
-    results[0];
-
-
-  if (!best) {
-
-    return null;
-
-  }
-
-
-  /*
-  Minimum confidence
-  */
-
-  if (
-    best.score < 0.30
-  ) {
-
-    return null;
-
-  }
-
-
-  return best.item;
+  return results;
 
 }
 
 
-/* ==================================================
-   SHOW RESULT
-================================================== */
+/*
+========================================
+SHOW POSSIBLE RESULTS
+========================================
+*/
 
-function showResult(
-  item,
-  originalQuestion
+function showPossibleResults(
+  results
 ) {
 
-  if (!item) {
+  result.classList.add(
+    "hidden"
+  );
 
-    result.classList.add(
-      "hidden"
+
+  const oldList =
+    document.getElementById(
+      "knowledgeResults"
     );
 
 
+  if (oldList) {
+
+    oldList.remove();
+
+  }
+
+
+  /*
+  Save results so that the user
+  can come back to them.
+  */
+
+  lastSearchResults =
+    results;
+
+
+  if (
+    results.length === 0
+  ) {
+
     status.textContent =
-      "No matching answer was found in the private Rwanda AI database.";
+      "No matching knowledge was found in the private Rwanda AI database.";
 
     return;
 
   }
 
 
+  status.textContent =
+    results.length +
+    " relevant knowledge records found.";
+
+
+  const container =
+    document.createElement(
+      "div"
+    );
+
+
+  container.id =
+    "knowledgeResults";
+
+
+  container.style.marginTop =
+    "20px";
+
+
+  const title =
+    document.createElement(
+      "h3"
+    );
+
+
+  title.textContent =
+    "Knowledge found";
+
+
+  container.appendChild(
+    title
+  );
+
+
+  const explanation =
+    document.createElement(
+      "p"
+    );
+
+
+  explanation.textContent =
+    "Select the topic you want to view:";
+
+
+  container.appendChild(
+    explanation
+  );
+
+
+  results.forEach(
+    (resultData, index) => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.type =
+        "button";
+
+
+      button.textContent =
+        (index + 1) +
+        ". " +
+        (
+          resultData.item.question ||
+          "Untitled knowledge"
+        );
+
+
+      button.style.display =
+        "block";
+
+
+      button.style.width =
+        "100%";
+
+
+      button.style.textAlign =
+        "left";
+
+
+      button.style.marginBottom =
+        "10px";
+
+
+      button.style.padding =
+        "12px";
+
+
+      button.style.cursor =
+        "pointer";
+
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          showSelectedAnswer(
+            resultData.item
+          );
+
+        }
+      );
+
+
+      container.appendChild(
+        button
+      );
+
+    }
+  );
+
+
+  result.parentNode.insertBefore(
+    container,
+    result
+  );
+
+}
+
+
+/*
+========================================
+SHOW SELECTED ANSWER
+========================================
+*/
+
+function showSelectedAnswer(
+  item
+) {
+
+  const list =
+    document.getElementById(
+      "knowledgeResults"
+    );
+
+
+  if (list) {
+
+    list.remove();
+
+  }
+
+
   resultQuestion.textContent =
-    originalQuestion;
+    item.question ||
+    "Knowledge";
 
 
   resultAnswer.textContent =
@@ -805,12 +1121,84 @@ function showResult(
   status.textContent =
     "Answer found in Rwanda AI private database.";
 
+
+  /*
+  ========================================
+  BACK TO RESULTS BUTTON
+  ========================================
+  */
+
+  let backButton =
+    document.getElementById(
+      "backToKnowledgeResults"
+    );
+
+
+  if (backButton) {
+
+    backButton.remove();
+
+  }
+
+
+  backButton =
+    document.createElement(
+      "button"
+    );
+
+
+  backButton.id =
+    "backToKnowledgeResults";
+
+
+  backButton.type =
+    "button";
+
+
+  backButton.textContent =
+    "← Back to results";
+
+
+  backButton.style.display =
+    "block";
+
+
+  backButton.style.marginTop =
+    "20px";
+
+
+  backButton.style.padding =
+    "12px 16px";
+
+
+  backButton.style.cursor =
+    "pointer";
+
+
+  backButton.addEventListener(
+    "click",
+    () => {
+
+      showPossibleResults(
+        lastSearchResults
+      );
+
+    }
+  );
+
+
+  result.appendChild(
+    backButton
+  );
+
 }
 
 
-/* ==================================================
-   LOAD KNOWLEDGE DATABASE
-================================================== */
+/*
+========================================
+LOAD KNOWLEDGE
+========================================
+*/
 
 async function loadKnowledge() {
 
@@ -835,16 +1223,11 @@ async function loadKnowledge() {
     snapshot.forEach(
       doc => {
 
-        const data =
-          doc.data();
-
-
         knowledgeData.push({
 
-          id:
-            doc.id,
+          id: doc.id,
 
-          ...data
+          ...doc.data()
 
         });
 
@@ -861,7 +1244,6 @@ async function loadKnowledge() {
       "Rwanda AI Knowledge:",
       knowledgeData
     );
-
 
   }
 
@@ -881,9 +1263,11 @@ async function loadKnowledge() {
 }
 
 
-/* ==================================================
-   SEARCH BUTTON
-================================================== */
+/*
+========================================
+SEARCH BUTTON
+========================================
+*/
 
 searchButton.addEventListener(
   "click",
@@ -909,28 +1293,36 @@ searchButton.addEventListener(
     }
 
 
-    const answer =
+    /*
+    Save the original search.
+    */
+
+    lastSearchQuestion =
+      question;
+
+
+    /*
+    Search private database.
+    */
+
+    const results =
       searchKnowledge(
         question
       );
 
 
-    showResult(
-      answer,
-      question
+    /*
+    Show list.
+    */
+
+    showPossibleResults(
+      results
     );
 
 
-    /*
-    CLEAR INPUT
-    */
+    questionInput.value =
+      "";
 
-    questionInput.value = "";
-
-
-    /*
-    RETURN CURSOR
-    */
 
     questionInput.focus();
 
@@ -938,9 +1330,11 @@ searchButton.addEventListener(
 );
 
 
-/* ==================================================
-   ENTER KEY
-================================================== */
+/*
+========================================
+ENTER KEY
+========================================
+*/
 
 questionInput.addEventListener(
   "keydown",
@@ -958,8 +1352,10 @@ questionInput.addEventListener(
 );
 
 
-/* ==================================================
-   START
-================================================== */
+/*
+========================================
+START
+========================================
+*/
 
 loadKnowledge();
