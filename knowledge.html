@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>Rwanda AI Knowledge Hub</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+
+  background:
+    linear-gradient(
+      135deg,
+      #00a1de,
+      #f4c300,
+      #20603d
+    );
+
+  min-height: 100vh;
+  color: #222;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.header {
+  background: #00a1de;
+  color: white;
+  padding: 25px 20px;
+  text-align: center;
+
+  border-bottom:
+    6px solid #f4c300;
+
+  box-shadow:
+    0 4px 12px rgba(0,0,0,0.2);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 27px;
+  font-weight: bold;
+}
+
+.header p {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.container {
+  max-width: 750px;
+  margin: 35px auto;
+  padding: 20px;
+}
+
+
+/* =========================
+   SEARCH BOX
+========================= */
+
+.search-box {
+  background: white;
+
+  padding: 25px;
+
+  border-radius: 18px;
+
+  border-top:
+    6px solid #00a1de;
+
+  box-shadow:
+    0 8px 25px rgba(0,0,0,0.18);
+}
+
+.search-box h2 {
+  margin-top: 0;
+  color: #20603d;
+}
+
+#questionInput {
+
+  width: 100%;
+
+  padding: 15px;
+
+  border:
+    2px solid #00a1de;
+
+  border-radius: 10px;
+
+  font-size: 16px;
+
+  outline: none;
+}
+
+#questionInput:focus {
+
+  border-color: #f4c300;
+
+  box-shadow:
+    0 0 0 3px rgba(244,195,0,0.2);
+}
+
+
+/* =========================
+   SEARCH BUTTON
+========================= */
+
+#searchButton {
+
+  width: 100%;
+
+  margin-top: 13px;
+
+  padding: 15px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #00a1de,
+      #20603d
+    );
+
+  color: white;
+
+  font-size: 17px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+#searchButton:hover {
+
+  opacity: 0.9;
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+#status {
+
+  margin-top: 15px;
+
+  text-align: center;
+
+  color: #20603d;
+
+  font-size: 14px;
+}
+
+
+/* =========================
+   RESULT
+========================= */
+
+.result {
+
+  margin-top: 22px;
+
+  background: white;
+
+  padding: 22px;
+
+  border-radius: 18px;
+
+  border-left:
+    6px solid #f4c300;
+
+  box-shadow:
+    0 8px 25px rgba(0,0,0,0.18);
+}
+
+.result h3 {
+
+  margin-top: 0;
+
+  color: #00a1de;
+
+  font-size: 18px;
+}
+
+.answer {
+
+  white-space: pre-wrap;
+
+  line-height: 1.7;
+
+  color: #222;
+}
+
+
+/* =========================
+   BACK BUTTON
+========================= */
+
+.back {
+
+  display: inline-block;
+
+  margin-top: 22px;
+
+  padding: 11px 18px;
+
+  background: #20603d;
+
+  color: white;
+
+  text-decoration: none;
+
+  border-radius: 9px;
+
+  font-weight: bold;
+}
+
+.back:hover {
+
+  background: #16482e;
+}
+
+
+/* =========================
+   HIDDEN
+========================= */
+
+.hidden {
+  display: none;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+  .container {
+    margin: 20px auto;
+    padding: 15px;
+  }
+
+  .header h1 {
+    font-size: 23px;
+  }
+
+  .search-box {
+    padding: 20px;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<div class="header">
+
+  <h1>
+    Rwanda AI Knowledge Hub
+  </h1>
+
+  <p>
+    Search information from the private Rwanda AI database
+  </p>
+
+</div>
+
+
+<!-- =========================
+     MAIN
+========================= -->
+
+<div class="container">
+
+
+  <!-- SEARCH -->
+
+  <div class="search-box">
+
+    <h2>
+      Ask the Knowledge Hub
+    </h2>
+
+    <input
+      type="text"
+      id="questionInput"
+      placeholder="Type your question..."
+      autocomplete="off"
+    >
+
+    <button id="searchButton">
+      Search
+    </button>
+
+    <div id="status"></div>
+
+  </div>
+
+
+  <!-- RESULT -->
+
+  <div
+    id="result"
+    class="result hidden"
+  >
+
+    <h3 id="resultQuestion"></h3>
+
+    <div
+      id="resultAnswer"
+      class="answer"
+    ></div>
+
+  </div>
+
+
+  <!-- BACK -->
+
+  <a
+    href="./index.html"
+    class="back"
+  >
+    ← Back to Rwanda AI
+  </a>
+
+
+</div>
+
+
+<script
+  type="module"
+  src="./knowledge.js"
+></script>
+
+
+</body>
+
+</html>
