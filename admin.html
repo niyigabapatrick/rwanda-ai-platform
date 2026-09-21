@@ -1,105 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
-  
-  <head>
-    
-    <meta charset="UTF-8">
-    
-    <meta name="viewport"
-    content="width=device-width,initial-scale=1.0">
-    
-   <title>Admin Knowledge-Rwanda AI Platform</title>
-   
-   <link rel="stylesheet"
-   href="style.css">
-   
-   </head>
-   
-   <body>
-     
-   <header>
-   
-   <h1>🇷🇼 Rwanda AI Platform</h1>
-   
-   <p>Knowledge Administration</p>
-   
-   </header>
-   
-   <nav>
-     
-   <a href="index.html">Home</a>
-   
-   <a href="ai.html">AI Assistant</a>
-   
-   <a href="register.html">Register Service</a>
-   
-   </nav>
-   
-   
-   <section class="form-container">
-     
-   <h2>➕ Add AI Knowledge</h2>
-   
-   <p>
-   Only the administrator can add questions and answers.
-   </p>
-   
-   
-   <input
-   id="question"
-   type="text"
-   placeholder="Enter Question">
-   
-   
-   <input
-   id="answer"
-   type="text"
-   placeholder="Enter Answer">
-   
-   
-   <button id="addKnowledgeBtn">
-     Add Knowledge
-     </button>
-     
-     
-    <button id="logoutBtn">
-      Logout
-     </button>
-     
-     
-     <p id="message"></p>
-     
-     </section>
-     
-     
-     <footer>
-       
-     <p>
-     © 2026 Rwanda AI Platform
-     </p>
-     
-     </footer>
-     
-     
-     <script type="module"
-     src="admin.js"></script>
-     
-     </body>
-     
-     </html>
-     
-     
-     
-   
-   
-   
-   
-   
-   
-   
-   
-       
-       
-       
-  
-  
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0"
+>
+
+<title>Admin Knowledge - Rwanda AI Platform</title>
+
+<link
+  rel="stylesheet"
+  href="style.css"
+>
+
+<style>
+
+.form-container textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: Arial, sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.form-container input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.keyword-help {
+  font-size: 14px;
+  color: #555;
+  margin-top: -8px;
+  margin-bottom: 12px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<header>
+
+<h1>🇷🇼 Rwanda AI Platform</h1>
+
+<p>Knowledge Administration</p>
+
+</header>
+
+
+<nav>
+
+<a href="index.html">Home</a>
+
+<a href="ai.html">AI Assistant</a>
+
+<a href="register.html">Register Service</a>
+
+</nav>
+
+
+<section class="form-container">
+
+<h2>➕ Add AI Knowledge</h2>
+
+<p>
+Only the administrator can add questions and answers.
+</p>
+
+
+<!-- QUESTION -->
+
+<input
+  id="question"
+  type="text"
+  placeholder="Enter Question"
+>
+
+
+<!-- ANSWER -->
+
+<textarea
+  id="answer"
+  placeholder="Enter Answer"
+></textarea>
+
+
+<!-- ALL POSSIBLE KEYWORDS -->
+
+<label for="allKeywords">
+
+<strong>
+All Possible Keywords / Question Variations
+</strong>
+
+</label>
+
+<p class="keyword-help">
+
+Enter different words and ways a user might ask the same question.
+You can write one keyword or phrase per line.
+
+</p>
+
+
+<textarea
+  id="allKeywords"
+  placeholder="Example:
+
+major mountains Rwanda
+mountains in Rwanda
+list of mountains in Rwanda
+Rwanda mountain names
+what mountains are in Rwanda
+misozi ikomeye mu Rwanda
+imisozi yo mu Rwanda
+ni iyihe misozi iri mu Rwanda"
+></textarea>
+
+
+<button id="addKnowledgeBtn">
+
+Add Knowledge
+
+</button>
+
+
+<button id="logoutBtn">
+
+Logout
+
+</button>
+
+
+<p id="message"></p>
+
+</section>
+
+
+<footer>
+
+<p>
+© 2026 Rwanda AI Platform
+</p>
+
+</footer>
+
+
+<script
+  type="module"
+  src="admin.js"
+></script>
+
+
+</body>
+
+</html>
