@@ -1,19 +1,20 @@
 {
-"id": "./",
-"name": "Rwanda AI Platform",
-"short_name": "Rwanda AI",
-"description": "Rwanda AI Platform - AI Assistant and Service & Supplier Finder",
-"start_url": "./",
-"scope": "./",
-"display": "standalone",
-"background_color": "#ffffff",
-"theme_color": "#000000",
-"orientation": "portrait",
-"icons": [
-{
-"src": "./file_00000000b77c820898e00d1280791658.png",
-"sizes": "any",
-"type": "image/png"
-}
-]
+  "id": "./",
+  "name": "Rwanda AI Platform",
+  "short_name": "Rwanda AI",
+  "description": "Rwanda AI Platform - AI Assistant and Service & Supplier Finder",
+  "start_url": "./ai.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./file_00000000b77c820898e00d1280791658.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
