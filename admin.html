@@ -20,34 +20,185 @@
 <style>
 
 .form-container textarea {
+
   width: 100%;
+
   min-height: 140px;
+
   padding: 12px;
+
   margin-top: 10px;
+
   margin-bottom: 15px;
+
   box-sizing: border-box;
+
   resize: vertical;
+
   font-family: Arial, sans-serif;
+
   border: 1px solid #ccc;
+
   border-radius: 8px;
+
 }
 
-.form-container input {
+.form-container input,
+.form-container select {
+
   width: 100%;
+
   box-sizing: border-box;
+
+  padding: 12px;
+
+  margin-top: 8px;
+
+  margin-bottom: 15px;
+
+  border: 1px solid #ccc;
+
+  border-radius: 8px;
+
+  font-size: 15px;
+
+}
+
+.section-box {
+
+  margin-top: 25px;
+
+  padding: 18px;
+
+  border: 1px solid #ddd;
+
+  border-radius: 12px;
+
+  background: #fafafa;
+
+}
+
+.section-box h3 {
+
+  margin-top: 0;
+
+  color: #20603d;
+
+}
+
+.small-text {
+
+  font-size: 13px;
+
+  color: #666;
+
 }
 
 .keyword-help {
+
   font-size: 14px;
+
   color: #555;
+
   margin-top: -8px;
+
   margin-bottom: 12px;
+
+}
+
+.admin-button {
+
+  width: 100%;
+
+  margin-top: 10px;
+
+  padding: 13px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: #20603d;
+
+  color: white;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+}
+
+.admin-button:hover {
+
+  opacity: 0.9;
+
+}
+
+.danger-button {
+
+  background: #8b1e1e;
+
+}
+
+.analytics-card {
+
+  background: white;
+
+  border: 1px solid #ddd;
+
+  border-radius: 10px;
+
+  padding: 14px;
+
+  margin-top: 12px;
+
+}
+
+.analytics-rank {
+
+  font-size: 20px;
+
+  font-weight: bold;
+
+  color: #20603d;
+
+}
+
+.analytics-question {
+
+  font-weight: bold;
+
+  margin-top: 6px;
+
+}
+
+.analytics-topic {
+
+  font-size: 13px;
+
+  color: #666;
+
+  margin-top: 5px;
+
+}
+
+.analytics-views {
+
+  margin-top: 8px;
+
+  font-weight: bold;
+
+}
+
+.analytics-empty {
+
+  color: #666;
+
 }
 
 </style>
 
 </head>
-
 
 <body>
 
@@ -59,45 +210,136 @@
 
 </header>
 
-
 <nav>
 
-<a href="index.html">Home</a>
+<a href="index.html">
+Home
+</a>
 
-<a href="ai.html">AI Assistant</a>
+<a href="ai.html">
+AI Assistant
+</a>
 
-<a href="register.html">Register Service</a>
+<a href="register.html">
+Register Service
+</a>
 
 </nav>
 
-
 <section class="form-container">
 
-<h2>➕ Add AI Knowledge</h2>
+<h2>
+Knowledge Management
+</h2>
 
 <p>
-Only the administrator can add questions and answers.
+Manage Rwanda AI private knowledge.
 </p>
 
 
-<!-- QUESTION -->
+<div class="section-box">
+
+<h3>
+1. Select Existing Topic
+</h3>
+
+<p class="small-text">
+
+Search for an existing topic before creating
+a new one.
+
+</p>
+
+<input
+  id="topicSearch"
+  type="text"
+  placeholder="Search existing topic..."
+  autocomplete="off"
+>
+
+<select
+  id="topicSelect"
+>
+
+<option value="">
+Select an existing topic
+</option>
+
+</select>
+
+<button
+  id="useSelectedTopicBtn"
+  class="admin-button"
+  type="button"
+>
+
+Use Selected Topic
+
+</button>
+
+</div>
+
+
+<div class="section-box">
+
+<h3>
+2. Or Create New Topic
+</h3>
+
+<input
+  id="newTopic"
+  type="text"
+  placeholder="Enter new topic name"
+  autocomplete="off"
+>
+
+<button
+  id="createTopicModeBtn"
+  class="admin-button"
+  type="button"
+>
+
+Create New Topic
+
+</button>
+
+</div>
+
+
+<div class="section-box">
+
+<h3>
+
+Current Topic:
+
+<span id="currentTopicLabel">
+None selected
+</span>
+
+</h3>
+
+</div>
+
+
+<div class="section-box">
+
+<h3>
+3. Add Question & Answer
+</h3>
 
 <input
   id="question"
   type="text"
   placeholder="Enter Question"
+  autocomplete="off"
 >
-
-
-<!-- ANSWER -->
 
 <textarea
   id="answer"
-  placeholder="Enter Answer"
+  placeholder="Enter Answer
+
+Use **important text** for bold words."
 ></textarea>
-
-
-<!-- ALL POSSIBLE KEYWORDS -->
 
 <label for="allKeywords">
 
@@ -109,11 +351,12 @@ All Possible Keywords / Question Variations
 
 <p class="keyword-help">
 
-Enter different words and ways a user might ask the same question.
-You can write one keyword or phrase per line.
+Enter different words and ways a user might
+ask the same question.
+
+Write one keyword or phrase per line.
 
 </p>
-
 
 <textarea
   id="allKeywords"
@@ -129,25 +372,75 @@ imisozi yo mu Rwanda
 ni iyihe misozi iri mu Rwanda"
 ></textarea>
 
+<button
+  id="addKnowledgeBtn"
+  class="admin-button"
+  type="button"
+>
 
-<button id="addKnowledgeBtn">
-
-Add Knowledge
+Add Question & Answer
 
 </button>
 
+<p id="message"></p>
 
-<button id="logoutBtn">
+</div>
+
+
+<!--
+========================================
+QUESTION ANALYSIS
+========================================
+-->
+
+<div class="section-box">
+
+<h3>
+📊 Question Analysis / Popular Knowledge
+</h3>
+
+<p class="small-text">
+
+See the questions users open most often
+in Rwanda AI Knowledge Hub.
+
+</p>
+
+<button
+  id="loadAnalyticsBtn"
+  class="admin-button"
+  type="button"
+>
+
+Load Popular Knowledge
+
+</button>
+
+<div id="analytics">
+
+<p class="analytics-empty">
+
+Click "Load Popular Knowledge" to view
+question analysis.
+
+</p>
+
+</div>
+
+</div>
+
+
+<button
+  id="logoutBtn"
+  class="admin-button danger-button"
+  type="button"
+>
 
 Logout
 
 </button>
 
-
-<p id="message"></p>
-
 </section>
-
 
 <footer>
 
@@ -157,12 +450,10 @@ Logout
 
 </footer>
 
-
 <script
   type="module"
   src="admin.js"
 ></script>
-
 
 </body>
 

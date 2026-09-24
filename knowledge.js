@@ -1,24 +1,27 @@
 /*
-========================================
+====================================================
 RWANDA AI PLATFORM
-PRIVATE KNOWLEDGE DATABASE
-STRICT TOPIC SEARCH
-RESULTS LIST
-BACK TO RESULTS
-========================================
+KNOWLEDGE HUB
+FIRESTORE KNOWLEDGE SEARCH
+OLD + NEW DATA STRUCTURE
+====================================================
 */
 
-
-import {
-  db
-} from "./firebase.js";
-
+import { db } from "./firebase.js";
 
 import {
   collection,
-  getDocs
+  getDocs,
+  addDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
 
+
+/*
+====================================================
+DOM ELEMENTS
+====================================================
+*/
 
 const questionInput =
   document.getElementById("questionInput");
@@ -29,6 +32,12 @@ const searchButton =
 const status =
   document.getElementById("status");
 
+const knowledgeResults =
+  document.getElementById("knowledgeResults");
+
+const topicQuestions =
+  document.getElementById("topicQuestions");
+
 const result =
   document.getElementById("result");
 
@@ -38,219 +47,115 @@ const resultQuestion =
 const resultAnswer =
   document.getElementById("resultAnswer");
 
+const backToQuestions =
+  document.getElementById("backToQuestions");
 
-let knowledgeData = [];
+const backToTopics =
+  document.getElementById("backToTopics");
 
 
 /*
-========================================
-STORE LAST SEARCH RESULTS
-========================================
+====================================================
+GLOBAL DATA
+====================================================
 */
+
+let knowledgeRecords = [];
+
+let topics = [];
+
+let currentTopic = null;
+
+let currentQuestions = [];
 
 let lastSearchResults = [];
 
-let lastSearchQuestion = "";
-
 
 /*
-========================================
+====================================================
 STOP WORDS
-========================================
+====================================================
 */
 
 const stopWords = new Set([
 
+  "the",
+  "is",
   "a",
   "an",
   "and",
-  "are",
-  "as",
-  "at",
-  "be",
-  "by",
-  "can",
-  "could",
-  "do",
-  "does",
-  "for",
-  "from",
-  "how",
-  "i",
-  "in",
-  "is",
-  "it",
-  "of",
-  "on",
   "or",
-  "that",
-  "the",
-  "this",
+  "of",
+  "in",
+  "on",
   "to",
-  "was",
+  "for",
   "what",
-  "when",
-  "where",
-  "which",
   "who",
+  "where",
+  "when",
   "why",
-  "with",
-  "would",
-  "you",
-  "your",
+  "how",
+  "which",
   "tell",
   "me",
   "about",
-  "please",
-  "give",
-  "information",
-  "know",
 
-  "ni",
   "iki",
-  "ikihe",
-  "iyi",
-  "izi",
+  "ni",
   "mu",
-  "muri",
   "ku",
   "kuri",
+  "za",
   "rya",
   "ya",
-  "za",
-  "na",
-  "ese",
-  "mbwira",
-  "mpa",
-  "amakuru",
-  "he",
-  "hehe",
+  "ye",
+  "iki",
   "nde",
-  "igihe"
+  "iki",
+  "ute",
+  "hehe",
+  "ryari",
+  "kubera",
+  "ninde",
+  "mbwira",
+  "sobanura",
+  "amakuru",
+  "ikihe",
+  "aba",
+  "bangahe"
 
 ]);
 
 
 /*
-========================================
-TOPIC GROUPS
-========================================
-*/
-
-const topicGroups = {
-
-  mountain: [
-
-    "mountain",
-    "mountains",
-    "mount",
-    "misozi",
-    "umusozi",
-    "imisozi",
-    "highest mountain",
-    "major mountain",
-    "major mountains",
-    "mountainous"
-
-  ],
-
-
-  lake: [
-
-    "lake",
-    "lakes",
-    "ikiyaga",
-    "ibiyaga"
-
-  ],
-
-
-  river: [
-
-    "river",
-    "rivers",
-    "uruzi",
-    "umugezi",
-    "imigezi"
-
-  ],
-
-
-  capital: [
-
-    "capital",
-    "capital city",
-    "umurwa mukuru",
-    "umurwa"
-
-  ],
-
-
-  founder: [
-
-    "founder",
-    "founders",
-    "founded",
-    "founding",
-    "uwashinze",
-    "washinze",
-    "uwatangije"
-
-  ],
-
-
-  language: [
-
-    "language",
-    "languages",
-    "official language",
-    "official languages",
-    "ururimi",
-    "indimi",
-    "ururimi rwemewe",
-    "indimi zemewe"
-
-  ],
-
-
-  independence: [
-
-    "independence",
-    "independent",
-    "ubwigenge",
-    "kwigenga"
-
-  ],
-
-
-  animal: [
-
-    "animal",
-    "animals",
-    "national animal",
-    "inyamaswa",
-    "inyamaswa y'igihugu",
-    "inyamaswa z'igihugu"
-
-  ]
-
-};
-
-
-/*
-========================================
+====================================================
 NORMALIZE TEXT
-========================================
+====================================================
 */
 
 function normalizeText(text) {
 
-  return String(text || "")
+  if (
+    text === null ||
+    text === undefined
+  ) {
+    return "";
+  }
+
+  return String(text)
 
     .toLowerCase()
 
+    .normalize("NFD")
+
     .replace(
-      /[^\p{L}\p{N}\s]/gu,
+      /[\u0300-\u036f]/g,
+      ""
+    )
+
+    .replace(
+      /[^a-z0-9\u00C0-\uFFFF\s]/gi,
       " "
     )
 
@@ -260,14 +165,13 @@ function normalizeText(text) {
     )
 
     .trim();
-
 }
 
 
 /*
-========================================
+====================================================
 GET WORDS
-========================================
+====================================================
 */
 
 function getWords(text) {
@@ -275,167 +179,306 @@ function getWords(text) {
   const normalized =
     normalizeText(text);
 
-
   if (!normalized) {
-
     return [];
-
   }
 
-
   return normalized
-
-    .split(" ")
-
-    .filter(word => {
-
-      if (!word) {
-
-        return false;
-
-      }
-
-
-      if (
-        stopWords.has(word)
-      ) {
-
-        return false;
-
-      }
-
-
-      if (
-        word.length < 3
-      ) {
-
-        return false;
-
-      }
-
-
-      return true;
-
-    });
-
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(word =>
+      !stopWords.has(word)
+    );
 }
 
 
 /*
-========================================
+====================================================
 SIMPLIFY WORD
-========================================
+====================================================
 */
 
 function simplifyWord(word) {
 
-  let w =
-    word.toLowerCase();
+  return normalizeText(word)
 
+    .replace(
+      /(ing|ed|ly|es|s)$/i,
+      ""
+    )
+
+    .trim();
+}
+
+
+/*
+====================================================
+GET TOPIC
+====================================================
+*/
+
+function getTopic(item) {
 
   if (
-    w.length > 5 &&
-    w.endsWith("ies")
+    item &&
+    typeof item.topic === "string" &&
+    item.topic.trim()
+  ) {
+    return item.topic.trim();
+  }
+
+  if (
+    item &&
+    typeof item.title === "string" &&
+    item.title.trim()
+  ) {
+    return item.title.trim();
+  }
+
+  if (
+    item &&
+    typeof item.question === "string" &&
+    item.question.trim()
+  ) {
+    return item.question.trim();
+  }
+
+  return "Untitled Topic";
+}
+
+
+/*
+====================================================
+GET QUESTIONS
+====================================================
+*/
+
+function getQuestions(item) {
+
+  const questions = [];
+
+
+  /*
+  -----------------------------------------------
+  NEW STRUCTURE
+  -----------------------------------------------
+  */
+
+  if (
+    Array.isArray(item.questions)
   ) {
 
-    w =
-      w.slice(0, -3) +
-      "y";
+    item.questions.forEach(q => {
+
+      if (!q) {
+        return;
+      }
+
+      const question =
+        typeof q.question === "string"
+          ? q.question.trim()
+          : "";
+
+      const answer =
+        typeof q.answer === "string"
+          ? q.answer.trim()
+          : "";
+
+      const keywords =
+        Array.isArray(q.allKeywords)
+          ? q.allKeywords
+          : Array.isArray(q.keywords)
+            ? q.keywords
+            : [];
+
+      if (question) {
+
+        questions.push({
+
+          question,
+
+          answer,
+
+          allKeywords: keywords
+
+        });
+
+      }
+
+    });
 
   }
 
+
+  /*
+  -----------------------------------------------
+  OLD STRUCTURE
+  -----------------------------------------------
+  */
 
   else if (
-    w.length > 5 &&
-    w.endsWith("es")
+    typeof item.question === "string" &&
+    item.question.trim()
   ) {
 
-    w =
-      w.slice(0, -2);
+    questions.push({
+
+      question:
+        item.question.trim(),
+
+      answer:
+        typeof item.answer === "string"
+          ? item.answer.trim()
+          : "",
+
+      allKeywords:
+        Array.isArray(item.allKeywords)
+          ? item.allKeywords
+          : Array.isArray(item.keywords)
+            ? item.keywords
+            : []
+
+    });
 
   }
 
 
-  else if (
-    w.length > 4 &&
-    w.endsWith("s")
-  ) {
-
-    w =
-      w.slice(0, -1);
-
-  }
+  return questions;
+}
 
 
-  return w;
+/*
+====================================================
+BUILD TOPICS
+====================================================
+*/
+
+function buildTopics(records) {
+
+  const topicMap = new Map();
+
+
+  records.forEach(record => {
+
+    const topicName =
+      getTopic(record);
+
+    const topicKey =
+      normalizeText(topicName);
+
+
+    if (!topicKey) {
+      return;
+    }
+
+
+    if (!topicMap.has(topicKey)) {
+
+      topicMap.set(
+        topicKey,
+        {
+          name: topicName,
+          questions: [],
+          recordIds: []
+        }
+      );
+
+    }
+
+
+    const topic =
+      topicMap.get(topicKey);
+
+
+    if (
+      record.id &&
+      !topic.recordIds.includes(record.id)
+    ) {
+
+      topic.recordIds.push(
+        record.id
+      );
+
+    }
+
+
+    const questions =
+      getQuestions(record);
+
+
+    questions.forEach(q => {
+
+      const questionKey =
+        normalizeText(
+          q.question
+        );
+
+
+      if (!questionKey) {
+        return;
+      }
+
+
+      const alreadyExists =
+        topic.questions.some(
+          existing =>
+            normalizeText(
+              existing.question
+            ) === questionKey
+        );
+
+
+      if (!alreadyExists) {
+
+        topic.questions.push(q);
+
+      }
+
+    });
+
+  });
+
+
+  return Array.from(
+    topicMap.values()
+  );
 
 }
 
 
 /*
-========================================
-GET RECORD TEXT
-========================================
+====================================================
+GET TOPIC SEARCH TEXT
+====================================================
 */
 
-function getRecordText(item) {
+function getTopicSearchText(topic) {
 
-  let text = "";
-
-
-  if (item.question) {
-
-    text +=
-      " " +
-      item.question;
-
-  }
+  let text =
+    topic.name || "";
 
 
-  if (item.keywords) {
+  topic.questions.forEach(q => {
+
+    text += " ";
+    text += q.question || "";
+
+    text += " ";
+    text += q.answer || "";
+
 
     if (
-      Array.isArray(item.keywords)
+      Array.isArray(
+        q.allKeywords
+      )
     ) {
 
-      text +=
-        " " +
-        item.keywords.join(" ");
+      text += " ";
+      text += q.allKeywords.join(" ");
 
     }
 
-    else {
-
-      text +=
-        " " +
-        String(item.keywords);
-
-    }
-
-  }
-
-
-  if (item.allKeywords) {
-
-    if (
-      Array.isArray(item.allKeywords)
-    ) {
-
-      text +=
-        " " +
-        item.allKeywords.join(" ");
-
-    }
-
-    else {
-
-      text +=
-        " " +
-        String(item.allKeywords);
-
-    }
-
-  }
+  });
 
 
   return normalizeText(text);
@@ -444,156 +487,30 @@ function getRecordText(item) {
 
 
 /*
-========================================
-DETECT USER TOPIC
-========================================
+====================================================
+SCORE TOPIC
+====================================================
 */
 
-function detectUserTopic(question) {
-
-  const normalized =
-    normalizeText(question);
-
-
-  const topicNames =
-    Object.keys(topicGroups);
-
-
-  /*
-  Check all topic groups.
-  */
-
-  for (
-    const topic of topicNames
-  ) {
-
-    const phrases =
-      topicGroups[topic];
-
-
-    for (
-      const phrase of phrases
-    ) {
-
-      const normalizedPhrase =
-        normalizeText(phrase);
-
-
-      if (
-        normalized.includes(
-          normalizedPhrase
-        )
-      ) {
-
-        return topic;
-
-      }
-
-    }
-
-  }
-
-
-  return null;
-
-}
-
-
-/*
-========================================
-CHECK RECORD TOPIC
-========================================
-*/
-
-function recordBelongsToTopic(
-  item,
-  topic
+function scoreTopic(
+  topic,
+  searchText
 ) {
 
-  if (!topic) {
+  const query =
+    normalizeText(searchText);
 
-    return false;
-
+  if (!query) {
+    return 0;
   }
 
 
-  const recordText =
-    getRecordText(item);
+  const queryWords =
+    getWords(query);
 
-
-  const phrases =
-    topicGroups[topic];
-
-
-  if (!phrases) {
-
-    return false;
-
-  }
-
-
-  for (
-    const phrase of phrases
-  ) {
-
-    const normalizedPhrase =
-      normalizeText(phrase);
-
-
-    if (
-      recordText.includes(
-        normalizedPhrase
-      )
-    ) {
-
-      return true;
-
-    }
-
-  }
-
-
-  return false;
-
-}
-
-
-/*
-========================================
-GET USER SEARCH WORDS
-========================================
-*/
-
-function getUserSearchWords(
-  question
-) {
-
-  return getWords(question)
-
-    .map(
-      simplifyWord
-    );
-
-}
-
-
-/*
-========================================
-CALCULATE TOPIC SCORE
-========================================
-*/
-
-function calculateTopicScore(
-  question,
-  item,
-  topic
-) {
 
   if (
-    !recordBelongsToTopic(
-      item,
-      topic
-    )
+    queryWords.length === 0
   ) {
 
     return 0;
@@ -601,104 +518,150 @@ function calculateTopicScore(
   }
 
 
-  const userWords =
-    getUserSearchWords(
-      question
+  const topicName =
+    normalizeText(
+      topic.name
     );
 
 
-  const recordWords =
-    getWords(
-      getRecordText(item)
-    ).map(
-      simplifyWord
+  const searchContent =
+    getTopicSearchText(
+      topic
     );
 
 
-  let matched = 0;
+  let score = 0;
 
 
-  userWords.forEach(
-    userWord => {
+  /*
+  -----------------------------------------------
+  EXACT FULL MATCH
+  -----------------------------------------------
+  */
 
-      const found =
-        recordWords.some(
-          recordWord => {
+  if (
+    topicName === query
+  ) {
 
-            return (
+    score += 100;
 
-              recordWord ===
-              userWord
-
-              ||
-
-              (
-
-                userWord.length >= 5 &&
-
-                recordWord.length >= 5 &&
-
-                (
-
-                  recordWord.startsWith(
-                    userWord
-                  )
-
-                  ||
-
-                  userWord.startsWith(
-                    recordWord
-                  )
-
-                )
-
-              )
-
-            );
-
-          }
-        );
-
-
-      if (found) {
-
-        matched++;
-
-      }
-
-    }
-  );
-
-
-  let score = 1;
+  }
 
 
   if (
-    matched > 0
+    searchContent === query
   ) {
 
-    score +=
-      matched /
-      Math.max(
-        userWords.length,
-        1
-      );
+    score += 80;
 
   }
 
 
   /*
-  Exact question gets priority.
+  -----------------------------------------------
+  WORD MATCHING
+  -----------------------------------------------
+  */
+
+  queryWords.forEach(word => {
+
+    const simpleWord =
+      simplifyWord(word);
+
+
+    if (
+      topicName.includes(word)
+    ) {
+
+      score += 30;
+
+    }
+    else if (
+      simpleWord &&
+      topicName.includes(simpleWord)
+    ) {
+
+      score += 20;
+
+    }
+
+
+    if (
+      searchContent.includes(word)
+    ) {
+
+      score += 15;
+
+    }
+    else if (
+      simpleWord &&
+      searchContent.includes(simpleWord)
+    ) {
+
+      score += 10;
+
+    }
+
+
+    /*
+    -------------------------------------------
+    EXACT QUESTION MATCH
+    -------------------------------------------
+    */
+
+    topic.questions.forEach(q => {
+
+      const questionText =
+        normalizeText(
+          q.question
+        );
+
+
+      if (
+        questionText === query
+      ) {
+
+        score += 100;
+
+      }
+
+
+      if (
+        questionText.includes(word)
+      ) {
+
+        score += 25;
+
+      }
+
+
+      if (
+        simpleWord &&
+        questionText.includes(
+          simpleWord
+        )
+      ) {
+
+        score += 10;
+
+      }
+
+    });
+
+  });
+
+
+  /*
+  -----------------------------------------------
+  QUERY PHRASE MATCH
+  -----------------------------------------------
   */
 
   if (
-    normalizeText(question) ===
-    normalizeText(
-      item.question || ""
-    )
+    searchContent.includes(query)
   ) {
 
-    score += 10;
+    score += 50;
 
   }
 
@@ -709,305 +672,266 @@ function calculateTopicScore(
 
 
 /*
-========================================
-SEARCH KNOWLEDGE
-========================================
+====================================================
+SEARCH TOPICS
+====================================================
 */
 
-function searchKnowledge(
-  question
-) {
+function searchTopics(searchText) {
 
-  const topic =
-    detectUserTopic(
-      question
-    );
+  const query =
+    normalizeText(searchText);
 
 
-  console.log(
-    "User question:",
-    question
-  );
-
-
-  console.log(
-    "Detected topic:",
-    topic
-  );
-
-
-  /*
-  ========================================
-  STRICT TOPIC SEARCH
-  ========================================
-  */
-
-  if (topic) {
-
-    const results =
-      knowledgeData
-
-        .map(item => {
-
-          return {
-
-            item: item,
-
-            score:
-              calculateTopicScore(
-                question,
-                item,
-                topic
-              )
-
-          };
-
-        })
-
-        .filter(
-          result =>
-            result.score > 0
-        );
-
-
-    results.sort(
-      (a, b) =>
-        b.score -
-        a.score
-    );
-
-
-    console.log(
-      "Strict topic results:",
-      results
-    );
-
-
-    return results;
-
-  }
-
-
-  /*
-  ========================================
-  FALLBACK SEARCH
-  ========================================
-  */
-
-  const userWords =
-    getUserSearchWords(
-      question
-    );
-
-
-  if (
-    userWords.length === 0
-  ) {
+  if (!query) {
 
     return [];
 
   }
 
 
-  const results =
-    knowledgeData
-
-      .map(item => {
-
-        const recordWords =
-          getWords(
-            getRecordText(item)
-          ).map(
-            simplifyWord
-          );
+  const scored = [];
 
 
-        let matched = 0;
+  topics.forEach(topic => {
 
-
-        userWords.forEach(
-          userWord => {
-
-            const found =
-              recordWords.some(
-                recordWord => {
-
-                  return (
-
-                    recordWord ===
-                    userWord
-
-                    ||
-
-                    (
-
-                      userWord.length >= 5 &&
-
-                      recordWord.length >= 5 &&
-
-                      (
-
-                        recordWord.startsWith(
-                          userWord
-                        )
-
-                        ||
-
-                        userWord.startsWith(
-                          recordWord
-                        )
-
-                      )
-
-                    )
-
-                  );
-
-                }
-              );
-
-
-            if (found) {
-
-              matched++;
-
-            }
-
-          }
-        );
-
-
-        return {
-
-          item: item,
-
-          score:
-            matched /
-            userWords.length
-
-        };
-
-      })
-
-
-      .filter(
-        result =>
-          result.score > 0
+    const score =
+      scoreTopic(
+        topic,
+        query
       );
 
 
-  results.sort(
+    if (score > 0) {
+
+      scored.push({
+
+        topic,
+
+        score
+
+      });
+
+    }
+
+  });
+
+
+  scored.sort(
     (a, b) =>
-      b.score -
-      a.score
+      b.score - a.score
   );
 
 
-  return results;
+  return scored.map(
+    item => item.topic
+  );
 
 }
 
 
 /*
-========================================
-SHOW POSSIBLE RESULTS
-========================================
+====================================================
+SHOW TOPICS
+====================================================
 */
 
-function showPossibleResults(
-  results
-) {
+function showTopics(results) {
 
-  result.classList.add(
+  knowledgeResults.innerHTML = "";
+
+  topicQuestions.innerHTML = "";
+
+  result.classList.add("hidden");
+
+  topicQuestions.classList.add(
     "hidden"
   );
 
 
-  const oldList =
-    document.getElementById(
-      "knowledgeResults"
-    );
-
-
-  if (oldList) {
-
-    oldList.remove();
-
-  }
-
-
-  /*
-  Save results so that the user
-  can come back to them.
-  */
-
-  lastSearchResults =
-    results;
-
-
   if (
+    !results ||
     results.length === 0
   ) {
 
-    status.textContent =
-      "No matching knowledge was found in the private Rwanda AI database.";
+    knowledgeResults.innerHTML = `
+
+      <div
+        style="
+          text-align:center;
+          padding:20px;
+          color:#777;
+        "
+      >
+
+        No matching knowledge found.
+
+      </div>
+
+    `;
+
+
+    knowledgeResults.style.display =
+      "block";
 
     return;
 
   }
 
 
-  status.textContent =
-    results.length +
-    " relevant knowledge records found.";
+  results.forEach(topic => {
+
+    const button =
+      document.createElement(
+        "button"
+      );
 
 
-  const container =
-    document.createElement(
-      "div"
+    button.className =
+      "topic-card";
+
+
+    const title =
+      document.createElement(
+        "span"
+      );
+
+
+    title.className =
+      "topic-title";
+
+
+    title.textContent =
+      topic.name;
+
+
+    const count =
+      document.createElement(
+        "span"
+      );
+
+
+    count.className =
+      "topic-count";
+
+
+    count.textContent =
+
+      `${topic.questions.length} question` +
+
+      (
+        topic.questions.length === 1
+          ? ""
+          : "s"
+      );
+
+
+    button.appendChild(title);
+
+    button.appendChild(count);
+
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        showTopicQuestions(
+          topic
+        );
+
+      }
     );
 
 
-  container.id =
-    "knowledgeResults";
+    knowledgeResults.appendChild(
+      button
+    );
+
+  });
 
 
-  container.style.marginTop =
-    "20px";
+  knowledgeResults.style.display =
+    "block";
+
+}
 
 
-  const title =
+/*
+====================================================
+SHOW QUESTIONS INSIDE TOPIC
+====================================================
+*/
+
+function showTopicQuestions(
+  topic
+) {
+
+  currentTopic =
+    topic;
+
+  currentQuestions =
+    topic.questions;
+
+
+  knowledgeResults.style.display =
+    "none";
+
+
+  result.classList.add(
+    "hidden"
+  );
+
+
+  topicQuestions.innerHTML = "";
+
+
+  const heading =
     document.createElement(
       "h3"
     );
 
 
-  title.textContent =
-    "Knowledge found";
+  heading.textContent =
+    topic.name;
 
 
-  container.appendChild(
-    title
+  heading.style.color =
+    "#20603d";
+
+
+  topicQuestions.appendChild(
+    heading
   );
 
 
-  const explanation =
+  const info =
     document.createElement(
       "p"
     );
 
 
-  explanation.textContent =
-    "Select the topic you want to view:";
+  info.textContent =
+
+    `${topic.questions.length} question` +
+
+    (
+      topic.questions.length === 1
+        ? ""
+        : "s"
+    );
 
 
-  container.appendChild(
-    explanation
+  info.style.color =
+    "#777";
+
+
+  topicQuestions.appendChild(
+    info
   );
 
 
-  results.forEach(
-    (resultData, index) => {
+  topic.questions.forEach(
+    (question, index) => {
 
       const button =
         document.createElement(
@@ -1015,56 +939,28 @@ function showPossibleResults(
         );
 
 
-      button.type =
-        "button";
+      button.className =
+        "question-card";
 
 
       button.textContent =
-        (index + 1) +
-        ". " +
-        (
-          resultData.item.question ||
-          "Untitled knowledge"
-        );
-
-
-      button.style.display =
-        "block";
-
-
-      button.style.width =
-        "100%";
-
-
-      button.style.textAlign =
-        "left";
-
-
-      button.style.marginBottom =
-        "10px";
-
-
-      button.style.padding =
-        "12px";
-
-
-      button.style.cursor =
-        "pointer";
+        `${index + 1}. ${question.question}`;
 
 
       button.addEventListener(
         "click",
         () => {
 
-          showSelectedAnswer(
-            resultData.item
+          showAnswer(
+            question,
+            topic
           );
 
         }
       );
 
 
-      container.appendChild(
+      topicQuestions.appendChild(
         button
       );
 
@@ -1072,114 +968,28 @@ function showPossibleResults(
   );
 
 
-  result.parentNode.insertBefore(
-    container,
-    result
-  );
-
-}
-
-
-/*
-========================================
-SHOW SELECTED ANSWER
-========================================
-*/
-
-function showSelectedAnswer(
-  item
-) {
-
-  const list =
-    document.getElementById(
-      "knowledgeResults"
-    );
-
-
-  if (list) {
-
-    list.remove();
-
-  }
-
-
-  resultQuestion.textContent =
-    item.question ||
-    "Knowledge";
-
-
-  resultAnswer.textContent =
-    item.answer ||
-    "No answer available.";
-
-
-  result.classList.remove(
-    "hidden"
-  );
-
-
-  status.textContent =
-    "Answer found in Rwanda AI private database.";
-
-
-  /*
-  ========================================
-  BACK TO RESULTS BUTTON
-  ========================================
-  */
-
-  let backButton =
-    document.getElementById(
-      "backToKnowledgeResults"
-    );
-
-
-  if (backButton) {
-
-    backButton.remove();
-
-  }
-
-
-  backButton =
+  const backButton =
     document.createElement(
       "button"
     );
 
 
-  backButton.id =
-    "backToKnowledgeResults";
-
-
-  backButton.type =
-    "button";
+  backButton.className =
+    "action-button";
 
 
   backButton.textContent =
-    "← Back to results";
-
-
-  backButton.style.display =
-    "block";
-
-
-  backButton.style.marginTop =
-    "20px";
-
-
-  backButton.style.padding =
-    "12px 16px";
-
-
-  backButton.style.cursor =
-    "pointer";
+    "← Back to topics";
 
 
   backButton.addEventListener(
     "click",
     () => {
 
-      showPossibleResults(
+      topicQuestions.style.display =
+        "none";
+
+      showTopics(
         lastSearchResults
       );
 
@@ -1187,17 +997,301 @@ function showSelectedAnswer(
   );
 
 
-  result.appendChild(
+  topicQuestions.appendChild(
     backButton
+  );
+
+
+  topicQuestions.style.display =
+    "block";
+
+}
+
+
+/*
+====================================================
+SHOW ANSWER
+====================================================
+*/
+
+function showAnswer(
+  question,
+  topic
+) {
+
+  currentTopic =
+    topic;
+
+
+  resultQuestion.textContent =
+    question.question;
+
+
+  resultAnswer.innerHTML =
+    formatAnswer(
+      question.answer
+    );
+
+
+  knowledgeResults.style.display =
+    "none";
+
+
+  topicQuestions.style.display =
+    "none";
+
+
+  result.classList.remove(
+    "hidden"
+  );
+
+
+  result.style.display =
+    "block";
+
+
+  recordAnalytics(
+    topic
   );
 
 }
 
 
 /*
-========================================
+====================================================
+FORMAT ANSWER
+====================================================
+*/
+
+function formatAnswer(
+  text
+) {
+
+  if (
+    text === null ||
+    text === undefined
+  ) {
+
+    return "";
+
+  }
+
+
+  let safe =
+    escapeHTML(
+      String(text)
+    );
+
+
+  /*
+  -----------------------------------------------
+  BOLD
+  -----------------------------------------------
+  */
+
+  safe =
+    safe.replace(
+      /\*\*(.*?)\*\*/g,
+      "<strong>$1</strong>"
+    );
+
+
+  safe =
+    safe.replace(
+      /__(.*?)__/g,
+      "<strong>$1</strong>"
+    );
+
+
+  /*
+  -----------------------------------------------
+  NEW LINES
+  -----------------------------------------------
+  */
+
+  safe =
+    safe.replace(
+      /\r?\n/g,
+      "<br>"
+    );
+
+
+  return safe;
+
+}
+
+
+/*
+====================================================
+ESCAPE HTML
+====================================================
+*/
+
+function escapeHTML(
+  text
+) {
+
+  return text
+
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    )
+
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/*
+====================================================
+ANALYTICS
+====================================================
+*/
+
+async function recordAnalytics(
+  topic
+) {
+
+  try {
+
+    await addDoc(
+      collection(
+        db,
+        "knowledgeAnalytics"
+      ),
+      {
+
+        topic:
+          topic.name,
+
+        viewedAt:
+          serverTimestamp()
+
+      }
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Analytics error:",
+      error
+    );
+
+  }
+
+}
+
+
+/*
+====================================================
+PERFORM SEARCH
+====================================================
+*/
+
+function performSearch() {
+
+  const searchText =
+    questionInput.value.trim();
+
+
+  /*
+  -----------------------------------------------
+  EMPTY SEARCH
+  -----------------------------------------------
+  */
+
+  if (!searchText) {
+
+    status.textContent =
+      `${topics.length} topics available.`;
+
+    knowledgeResults.style.display =
+      "none";
+
+    topicQuestions.style.display =
+      "none";
+
+    result.classList.add(
+      "hidden"
+    );
+
+    return;
+
+  }
+
+
+  status.textContent =
+    "Searching knowledge...";
+
+
+  const results =
+    searchTopics(
+      searchText
+    );
+
+
+  lastSearchResults =
+    results;
+
+
+  if (
+    results.length > 0
+  ) {
+
+    status.textContent =
+
+      `${results.length} matching topic` +
+
+      (
+        results.length === 1
+          ? ""
+          : "s"
+      ) +
+
+      " found.";
+
+  }
+
+  else {
+
+    status.textContent =
+      "No matching knowledge found.";
+
+  }
+
+
+  showTopics(
+    results
+  );
+
+}
+
+
+/*
+====================================================
 LOAD KNOWLEDGE
-========================================
+====================================================
 */
 
 async function loadKnowledge() {
@@ -1205,7 +1299,7 @@ async function loadKnowledge() {
   try {
 
     status.textContent =
-      "Loading Rwanda AI Knowledge...";
+      "Loading knowledge...";
 
 
     const snapshot =
@@ -1217,32 +1311,78 @@ async function loadKnowledge() {
       );
 
 
-    knowledgeData = [];
+    /*
+    -----------------------------------------------
+    LOAD ALL FIRESTORE RECORDS
+    -----------------------------------------------
+    */
 
+    knowledgeRecords =
+      snapshot.docs.map(
+        doc => ({
 
-    snapshot.forEach(
-      doc => {
-
-        knowledgeData.push({
-
-          id: doc.id,
+          id:
+            doc.id,
 
           ...doc.data()
 
-        });
+        })
+      );
 
-      }
-    );
 
+    /*
+    -----------------------------------------------
+    BUILD TOPICS FROM ALL RECORDS
+    -----------------------------------------------
+    */
+
+    topics =
+      buildTopics(
+        knowledgeRecords
+      );
+
+
+    /*
+    -----------------------------------------------
+    STATUS
+    -----------------------------------------------
+    */
 
     status.textContent =
-      knowledgeData.length +
-      " knowledge records loaded.";
+
+      `${topics.length} topics available.`;
 
 
     console.log(
-      "Rwanda AI Knowledge:",
-      knowledgeData
+      "===================================="
+    );
+
+    console.log(
+      "RWANDA AI KNOWLEDGE HUB"
+    );
+
+    console.log(
+      "Firestore records:",
+      knowledgeRecords.length
+    );
+
+    console.log(
+      "Topics:",
+      topics.length
+    );
+
+    console.log(
+      "Knowledge data:",
+      knowledgeRecords
+    );
+
+    console.log(
+      "Built topics:",
+      topics
+    );
+
+    console.log(
+      "===================================="
     );
 
   }
@@ -1256,7 +1396,28 @@ async function loadKnowledge() {
 
 
     status.textContent =
-      "Failed to load the private knowledge database.";
+      "Failed to load knowledge.";
+
+
+    knowledgeResults.innerHTML = `
+
+      <div
+        style="
+          padding:20px;
+          text-align:center;
+          color:#b00020;
+        "
+      >
+
+        Failed to load knowledge.
+
+      </div>
+
+    `;
+
+
+    knowledgeResults.style.display =
+      "block";
 
   }
 
@@ -1264,76 +1425,21 @@ async function loadKnowledge() {
 
 
 /*
-========================================
+====================================================
 SEARCH BUTTON
-========================================
+====================================================
 */
 
 searchButton.addEventListener(
   "click",
-  () => {
-
-    const question =
-      questionInput.value.trim();
-
-
-    if (!question) {
-
-      status.textContent =
-        "Please enter a question.";
-
-
-      result.classList.add(
-        "hidden"
-      );
-
-
-      return;
-
-    }
-
-
-    /*
-    Save the original search.
-    */
-
-    lastSearchQuestion =
-      question;
-
-
-    /*
-    Search private database.
-    */
-
-    const results =
-      searchKnowledge(
-        question
-      );
-
-
-    /*
-    Show list.
-    */
-
-    showPossibleResults(
-      results
-    );
-
-
-    questionInput.value =
-      "";
-
-
-    questionInput.focus();
-
-  }
+  performSearch
 );
 
 
 /*
-========================================
+====================================================
 ENTER KEY
-========================================
+====================================================
 */
 
 questionInput.addEventListener(
@@ -1344,7 +1450,9 @@ questionInput.addEventListener(
       event.key === "Enter"
     ) {
 
-      searchButton.click();
+      event.preventDefault();
+
+      performSearch();
 
     }
 
@@ -1353,9 +1461,73 @@ questionInput.addEventListener(
 
 
 /*
-========================================
+====================================================
+BACK TO QUESTIONS
+====================================================
+*/
+
+backToQuestions.addEventListener(
+  "click",
+  () => {
+
+    result.classList.add(
+      "hidden"
+    );
+
+
+    result.style.display =
+      "none";
+
+
+    if (
+      currentTopic
+    ) {
+
+      showTopicQuestions(
+        currentTopic
+      );
+
+    }
+
+  }
+);
+
+
+/*
+====================================================
+BACK TO TOPICS
+====================================================
+*/
+
+backToTopics.addEventListener(
+  "click",
+  () => {
+
+    result.classList.add(
+      "hidden"
+    );
+
+
+    result.style.display =
+      "none";
+
+
+    topicQuestions.style.display =
+      "none";
+
+
+    showTopics(
+      lastSearchResults
+    );
+
+  }
+);
+
+
+/*
+====================================================
 START
-========================================
+====================================================
 */
 
 loadKnowledge();
