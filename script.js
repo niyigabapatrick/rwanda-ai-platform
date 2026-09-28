@@ -9,6 +9,9 @@ VOICE AI
 STICKERS
 DIRECT GOOGLE IMAGE SEARCH
 CLEAN NORMAL CALCULATION ANSWERS
+VOICE AUTO READ
+CALCULATION TEACHER VOICE
+SPEECH SYNCHRONIZED AUTO SCROLL
 ==========================================================
 */
 
@@ -67,6 +70,22 @@ let isSending = false;
 
 let recognition = null;
 let isListening = false;
+
+/*
+Voice question flag.
+It remains true after speech recognition ends
+until the answer has been successfully displayed
+and read.
+*/
+
+let isVoiceQuestion = false;
+
+/*
+Controls automatic speech.
+*/
+
+let isSpeakingAnswer = false;
+let speechSessionId = 0;
 
 let deferredInstallPrompt = null;
 
@@ -1032,6 +1051,966 @@ function createCopyButton(text) {
 
 /*
 ==========================================================
+SPEECH / CALCULATION HELPERS
+==========================================================
+*/
+
+/*
+Detect whether the question/answer is primarily
+a calculation or a mathematical/scientific derivation.
+*/
+
+function isCalculationContent(
+  question,
+  answer
+) {
+
+  const text =
+    (
+      String(question || "") +
+      " " +
+      String(answer || "")
+    ).toLowerCase();
+
+  const calculationPatterns = [
+
+    /\bcalculate\b/,
+    /\bcalculation\b/,
+    /\bsolve\b/,
+    /\bsolution\b/,
+    /\bsolve for\b/,
+    /\bfind x\b/,
+    /\bfind the value\b/,
+    /\bevaluate\b/,
+    /\bequation\b/,
+    /\bintegral\b/,
+    /\bintegrate\b/,
+    /\bderivative\b/,
+    /\bdifferentiate\b/,
+    /\bpolynomial\b/,
+    /\bquadratic\b/,
+    /\btrigonometry\b/,
+    /\bgeometry\b/,
+    /\bphysics calculation\b/,
+    /\bchemistry calculation\b/,
+    /\bmathematics\b/,
+    /\bmath\b/,
+    /\bproof\b/,
+    /\bcalculate the\b/,
+    /\bfind all roots\b/,
+    /\breal roots?\b/,
+    /\bshow that\b/,
+    /\bstep by step\b/,
+
+    /[=+\-×÷±≤≥≠≈∫√ΣΠ∞]/,
+    /x²/,
+    /x³/,
+    /x⁴/,
+    /x⁵/,
+    /\bdx\b/,
+    /\bf\(x\)/,
+    /\bp\(x\)/,
+    /\b\d+\s*[+\-×÷]\s*\d+\b/,
+    /\b\d+\s*\/\s*\d+\b/,
+    /\b\d+\s*%\b/
+
+  ];
+
+  return calculationPatterns.some(
+    pattern =>
+      pattern.test(text)
+  );
+}
+
+
+/*
+Convert mathematical notation into something that
+the browser's speech engine can pronounce more naturally.
+
+This DOES NOT change the visible answer.
+It only changes the spoken version.
+*/
+
+function makeSpeechFriendlyMath(text) {
+
+  let value =
+    String(text || "");
+
+  /*
+  Unicode superscripts
+  */
+
+  const superscriptSpeech = {
+
+    "⁰": " zero",
+    "¹": " one",
+    "²": " squared",
+    "³": " cubed",
+    "⁴": " to the fourth power",
+    "⁵": " to the fifth power",
+    "⁶": " to the sixth power",
+    "⁷": " to the seventh power",
+    "⁸": " to the eighth power",
+    "⁹": " to the ninth power",
+    "ⁿ": " to the n-th power",
+
+    "₀": " zero",
+    "₁": " one",
+    "₂": " two",
+    "₃": " three",
+    "₄": " four",
+    "₅": " five",
+    "₆": " six",
+    "₇": " seven",
+    "₈": " eight",
+    "₉": " nine"
+  };
+
+  Object.keys(
+    superscriptSpeech
+  ).forEach(symbol => {
+
+    value =
+      value.replace(
+        new RegExp(
+          symbol,
+          "g"
+        ),
+        superscriptSpeech[symbol]
+      );
+
+  });
+
+
+  /*
+  Mathematical symbols
+  */
+
+  value =
+    value.replace(
+      /√\((.*?)\)/g,
+      "square root of $1"
+    );
+
+  value =
+    value.replace(
+      /√([A-Za-z0-9]+)/g,
+      "square root of $1"
+    );
+
+  value =
+    value.replace(
+      /×/g,
+      " times "
+    );
+
+  value =
+    value.replace(
+      /÷/g,
+      " divided by "
+    );
+
+  value =
+    value.replace(
+      /±/g,
+      " plus or minus "
+    );
+
+  value =
+    value.replace(
+      /≤/g,
+      " less than or equal to "
+    );
+
+  value =
+    value.replace(
+      /≥/g,
+      " greater than or equal to "
+    );
+
+  value =
+    value.replace(
+      /≠/g,
+      " not equal to "
+    );
+
+  value =
+    value.replace(
+      /≈/g,
+      " approximately equal to "
+    );
+
+  value =
+    value.replace(
+      /∞/g,
+      " infinity "
+    );
+
+  value =
+    value.replace(
+      /∫/g,
+      " integral "
+    );
+
+  value =
+    value.replace(
+      /∂/g,
+      " partial derivative "
+    );
+
+  value =
+    value.replace(
+      /∇/g,
+      " nabla "
+    );
+
+  value =
+    value.replace(
+      /→/g,
+      " approaches "
+    );
+
+  value =
+    value.replace(
+      /π/g,
+      " pi "
+    );
+
+  value =
+    value.replace(
+      /Σ/g,
+      " sum "
+    );
+
+  value =
+    value.replace(
+      /Π/g,
+      " product "
+    );
+
+  value =
+    value.replace(
+      /Δ/g,
+      " delta "
+    );
+
+  value =
+    value.replace(
+      /Γ/g,
+      " gamma "
+    );
+
+  value =
+    value.replace(
+      /ζ/g,
+      " zeta "
+    );
+
+
+  /*
+  Fractions such as (a)/(b)
+  */
+
+  value =
+    value.replace(
+      /\(([^()]+)\)\/\(([^()]+)\)/g,
+      "the quantity $1 divided by the quantity $2"
+    );
+
+
+  /*
+  Simple slash fractions.
+  */
+
+  value =
+    value.replace(
+      /\b(\d+)\s*\/\s*(\d+)\b/g,
+      "$1 divided by $2"
+    );
+
+
+  /*
+  d/dx
+  */
+
+  value =
+    value.replace(
+      /\bd\/dx\b/gi,
+      "d by d x"
+    );
+
+
+  /*
+  Common calculation words.
+  */
+
+  value =
+    value.replace(
+      /\bStep\s+(\d+)\s*:/gi,
+      "Step $1. "
+    );
+
+  value =
+    value.replace(
+      /\bTherefore\b/gi,
+      "Therefore, "
+    );
+
+  value =
+    value.replace(
+      /\bThus\b/gi,
+      "Thus, "
+    );
+
+  value =
+    value.replace(
+      /\bHence\b/gi,
+      "Hence, "
+    );
+
+
+  /*
+  Make equations pause naturally.
+  */
+
+  value =
+    value.replace(
+      /\s*=\s*/g,
+      " equals "
+    );
+
+  value =
+    value.replace(
+      /\s*\+\s*/g,
+      " plus "
+    );
+
+  value =
+    value.replace(
+      /\s*-\s*/g,
+      " minus "
+    );
+
+
+  /*
+  Parentheses become small verbal pauses.
+  */
+
+  value =
+    value.replace(
+      /\(/g,
+      " "
+    );
+
+  value =
+    value.replace(
+      /\)/g,
+      " "
+    );
+
+
+  /*
+  Clean repeated spaces.
+  */
+
+  value =
+    value.replace(
+      /\s{2,}/g,
+      " "
+    );
+
+
+  return value.trim();
+}
+
+
+/*
+==========================================================
+SPEECH SEGMENTS
+==========================================================
+*/
+
+/*
+Split the visible answer into meaningful pieces.
+
+For calculations, each line is preferred because it
+normally represents one step.
+
+For ordinary answers, sentences are used.
+*/
+
+function createSpeechSegments(
+  text,
+  calculation = false
+) {
+
+  const cleaned =
+    cleanAIAnswer(text);
+
+  if (!cleaned) {
+    return [];
+  }
+
+
+  const lines =
+    cleaned
+      .split(/\n+/)
+      .map(
+        line => line.trim()
+      )
+      .filter(Boolean);
+
+
+  const segments = [];
+
+
+  lines.forEach(line => {
+
+    if (
+      calculation ||
+      line.length < 140
+    ) {
+
+      /*
+      Keep numbered calculation steps together.
+      */
+
+      segments.push(line);
+
+      return;
+    }
+
+
+    /*
+    Long normal-answer lines are divided
+    into sentences.
+    */
+
+    const sentenceParts =
+      line.match(
+        /[^.!?]+[.!?]+|[^.!?]+$/g
+      ) || [line];
+
+
+    sentenceParts.forEach(
+      part => {
+
+        const clean =
+          part.trim();
+
+        if (clean) {
+          segments.push(clean);
+        }
+      }
+    );
+  });
+
+
+  return segments;
+}
+
+
+/*
+==========================================================
+RENDER SPEECH-SYNC ANSWER
+==========================================================
+*/
+
+function renderSpeechSynchronizedAnswer(
+  answerContent,
+  cleaned
+) {
+
+  const calculation =
+    isCalculationContent(
+      "",
+      cleaned
+    );
+
+  const segments =
+    createSpeechSegments(
+      cleaned,
+      calculation
+    );
+
+
+  if (
+    segments.length === 0
+  ) {
+
+    answerContent.innerHTML =
+      escapeHTML(cleaned)
+        .replace(
+          /\*\*(.*?)\*\*/g,
+          "<strong>$1</strong>"
+        )
+        .replace(
+          /\n/g,
+          "<br>"
+        );
+
+    return;
+  }
+
+
+  /*
+  Build a fresh visible representation
+  using speech segments.
+  */
+
+  answerContent.innerHTML =
+    "";
+
+
+  segments.forEach(
+    (segment, index) => {
+
+      const span =
+        document.createElement(
+          "span"
+        );
+
+      span.className =
+        "rwanda-ai-speech-segment";
+
+      span.dataset.speechIndex =
+        String(index);
+
+      span.style.cssText =
+        "display:block;" +
+        "scroll-margin-top:20px;" +
+        "transition:background .25s ease, opacity .25s ease;" +
+        "border-radius:6px;" +
+        "padding:2px 3px;" +
+        "margin:1px 0;";
+
+      span.innerHTML =
+        escapeHTML(segment)
+          .replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+          );
+
+
+      answerContent.appendChild(
+        span
+      );
+    }
+  );
+}
+
+
+/*
+==========================================================
+HIGHLIGHT ACTIVE SPEECH SEGMENT
+==========================================================
+*/
+
+function clearSpeechHighlight() {
+
+  if (!answerBox) return;
+
+  const segments =
+    answerBox.querySelectorAll(
+      ".rwanda-ai-speech-segment"
+    );
+
+  segments.forEach(
+    segment => {
+
+      segment.style.background =
+        "";
+
+      segment.style.opacity =
+        "";
+
+      segment.removeAttribute(
+        "aria-current"
+      );
+    }
+  );
+}
+
+
+function highlightSpeechSegment(
+  index
+) {
+
+  if (!answerBox) return;
+
+  const segments =
+    answerBox.querySelectorAll(
+      ".rwanda-ai-speech-segment"
+    );
+
+  if (
+    !segments.length
+  ) {
+    return;
+  }
+
+
+  segments.forEach(
+    segment => {
+
+      segment.style.background =
+        "";
+
+      segment.style.opacity =
+        "";
+
+      segment.removeAttribute(
+        "aria-current"
+      );
+    }
+  );
+
+
+  const active =
+    segments[index];
+
+  if (!active) return;
+
+
+  /*
+  Subtle visual indication of the
+  exact part currently being spoken.
+  */
+
+  active.style.background =
+    "rgba(255, 235, 59, 0.18)";
+
+  active.style.opacity =
+    "1";
+
+  active.setAttribute(
+    "aria-current",
+    "true"
+  );
+
+
+  /*
+  Automatic synchronized scrolling.
+  */
+
+  active.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+
+/*
+==========================================================
+STOP SPEECH
+==========================================================
+*/
+
+function stopAnswerSpeech(
+  clearHighlight = true
+) {
+
+  speechSessionId++;
+
+  isSpeakingAnswer =
+    false;
+
+  if (
+    "speechSynthesis" in window
+  ) {
+
+    window.speechSynthesis.cancel();
+  }
+
+  if (clearHighlight) {
+    clearSpeechHighlight();
+  }
+
+  setVoiceStatus("");
+}
+
+
+/*
+==========================================================
+SPEECH LANGUAGE
+==========================================================
+*/
+
+function getSpeechLanguage(
+  text,
+  calculation = false
+) {
+
+  if (calculation) {
+
+    /*
+    Most mathematical/scientific terminology
+    is pronounced more consistently in English
+    by Android browser speech engines.
+    */
+
+    return "en-US";
+  }
+
+  return detectLanguage(text);
+}
+
+
+/*
+==========================================================
+TEACHER-STYLE SPEECH
+==========================================================
+*/
+
+function speakAnswerAsTeacher(
+  text,
+  options = {}
+) {
+
+  if (
+    !("speechSynthesis" in window)
+  ) {
+    setVoiceStatus(
+      "Text-to-speech is not supported by this browser."
+    );
+
+    return;
+  }
+
+
+  const cleaned =
+    cleanAIAnswer(text);
+
+  if (!cleaned) return;
+
+
+  stopAnswerSpeech(
+    false
+  );
+
+
+  const session =
+    speechSessionId;
+
+
+  const calculation =
+    options.calculation === true ||
+    isCalculationContent(
+      options.question || "",
+      cleaned
+    );
+
+
+  const segments =
+    createSpeechSegments(
+      cleaned,
+      calculation
+    );
+
+
+  if (!segments.length) {
+    return;
+  }
+
+
+  isSpeakingAnswer =
+    true;
+
+
+  let currentIndex = 0;
+
+
+  /*
+  Speech pauses are intentionally slightly
+  slower for calculations so the user can
+  follow the displayed steps.
+  */
+
+  const speechRate =
+    calculation
+      ? 0.88
+      : 0.95;
+
+
+  function speakNext() {
+
+    if (
+      session !== speechSessionId
+    ) {
+      return;
+    }
+
+
+    if (
+      currentIndex >=
+      segments.length
+    ) {
+
+      isSpeakingAnswer =
+        false;
+
+      clearSpeechHighlight();
+
+      setVoiceStatus(
+        "Answer finished."
+      );
+
+      setTimeout(() => {
+
+        if (
+          session ===
+          speechSessionId
+        ) {
+
+          setVoiceStatus("");
+        }
+
+      }, 1800);
+
+      return;
+    }
+
+
+    const segment =
+      segments[currentIndex];
+
+
+    highlightSpeechSegment(
+      currentIndex
+    );
+
+
+    const spokenText =
+      calculation
+        ? makeSpeechFriendlyMath(
+            segment
+          )
+        : segment;
+
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        spokenText
+      );
+
+
+    utterance.lang =
+      getSpeechLanguage(
+        segment,
+        calculation
+      );
+
+
+    utterance.rate =
+      speechRate;
+
+
+    utterance.pitch =
+      1;
+
+
+    /*
+    Slightly louder and clearer teacher-like
+    speech where supported by the browser.
+    */
+
+    utterance.volume =
+      1;
+
+
+    utterance.onstart =
+      () => {
+
+        if (
+          session !== speechSessionId
+        ) {
+          return;
+        }
+
+        setVoiceStatus(
+          calculation
+            ? "Rwanda AI is explaining the calculation..."
+            : "Rwanda AI is reading the answer..."
+        );
+      };
+
+
+    utterance.onend =
+      () => {
+
+        if (
+          session !== speechSessionId
+        ) {
+          return;
+        }
+
+
+        currentIndex++;
+
+
+        /*
+        Small pause between teacher steps.
+        */
+
+        const pause =
+          calculation
+            ? 280
+            : 120;
+
+
+        setTimeout(
+          () => {
+
+            if (
+              session ===
+              speechSessionId
+            ) {
+              speakNext();
+            }
+
+          },
+          pause
+        );
+      };
+
+
+    utterance.onerror =
+      event => {
+
+        if (
+          session !== speechSessionId
+        ) {
+          return;
+        }
+
+        console.warn(
+          "Speech synthesis error:",
+          event.error
+        );
+
+        isSpeakingAnswer =
+          false;
+
+        clearSpeechHighlight();
+
+        setVoiceStatus(
+          ""
+        );
+      };
+
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+  }
+
+
+  speakNext();
+}
+
+
+/*
+==========================================================
 DISPLAY ANSWER
 ==========================================================
 */
@@ -1072,16 +2051,18 @@ function displayAnswer(text) {
     "line-height:1.65;" +
     "word-wrap:break-word;";
 
-  answerContent.innerHTML =
-    escapeHTML(cleaned)
-      .replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong>$1</strong>"
-      )
-      .replace(
-        /\n/g,
-        "<br>"
-      );
+
+  /*
+  Render answer in synchronized speech
+  segments so the visible text can follow
+  the voice.
+  */
+
+  renderSpeechSynchronizedAnswer(
+    answerContent,
+    cleaned
+  );
+
 
   answerBox.appendChild(
     answerHeader
@@ -1694,6 +2675,8 @@ onAuthStateChanged(
 
     if (!user) {
 
+      stopAnswerSpeech();
+
       if (userEmailBox) {
         userEmailBox.textContent =
           "Not signed in";
@@ -1759,6 +2742,11 @@ if (logoutBtn) {
 
       try {
 
+        stopAnswerSpeech();
+
+        isVoiceQuestion =
+          false;
+
         await signOut(auth);
 
         currentUser = null;
@@ -1809,6 +2797,11 @@ if (newChatBtn) {
   newChatBtn.addEventListener(
     "click",
     () => {
+
+      stopAnswerSpeech();
+
+      isVoiceQuestion =
+        false;
 
       currentConversationId = null;
 
@@ -1973,6 +2966,16 @@ async function sendMessage() {
     return;
   }
 
+
+  /*
+  Preserve whether this request came from
+  Voice AI before the request starts.
+  */
+
+  const voiceRequest =
+    isVoiceQuestion;
+
+
   isSending = true;
 
   if (askBtn) {
@@ -1993,6 +2996,16 @@ async function sendMessage() {
   if (
     shouldSearchImages(question)
   ) {
+
+    /*
+    Image requests should never accidentally
+    trigger a voice answer.
+    */
+
+    isVoiceQuestion =
+      false;
+
+    stopAnswerSpeech();
 
     const imageQuery =
       buildImageSearchQuery(
@@ -2169,7 +3182,9 @@ async function sendMessage() {
           "Write fractions normally such as (a)/(b). " +
           "Write square roots as √(x). " +
           "Keep calculations easy to read and copy on a phone. " +
-          "Do not output raw LaTeX."
+          "Do not output raw LaTeX. " +
+          "For difficult calculations, explain the solution step by step " +
+          "as if teaching a student."
       });
 
 
@@ -2207,6 +3222,36 @@ async function sendMessage() {
       );
 
 
+    /*
+    Determine whether this answer should
+    automatically be spoken.
+
+    Voice question = always read.
+
+    Calculation = also read automatically.
+    */
+
+    const calculationAnswer =
+      isCalculationContent(
+        question,
+        cleanedAnswer
+      );
+
+
+    const shouldAutoRead =
+      voiceRequest ||
+      calculationAnswer;
+
+
+    /*
+    The flag is consumed now so a later typed
+    question cannot inherit it accidentally.
+    */
+
+    isVoiceQuestion =
+      false;
+
+
     conversationMessages.push({
       role: "assistant",
       content: cleanedAnswer
@@ -2218,6 +3263,40 @@ async function sendMessage() {
     );
 
     scrollToAnswer();
+
+
+    /*
+    ======================================================
+    AUTOMATIC VOICE
+    ======================================================
+    */
+
+    if (shouldAutoRead) {
+
+      setTimeout(() => {
+
+        /*
+        If another request has already started,
+        do not start old speech.
+        */
+
+        if (!isSending) {
+          return;
+        }
+
+        speakAnswerAsTeacher(
+          cleanedAnswer,
+          {
+            question:
+              question,
+
+            calculation:
+              calculationAnswer
+          }
+        );
+
+      }, 350);
+    }
 
 
     await saveMessage(
@@ -2248,7 +3327,11 @@ async function sendMessage() {
 
 
     setStatus(
-      "Rwanda AI answered."
+      calculationAnswer
+        ? "Rwanda AI answered and is explaining the calculation."
+        : shouldAutoRead
+          ? "Rwanda AI answered and is reading the answer."
+          : "Rwanda AI answered."
     );
 
 
@@ -2288,6 +3371,12 @@ async function sendMessage() {
     );
 
 
+    isVoiceQuestion =
+      false;
+
+    stopAnswerSpeech();
+
+
     if (
       conversationMessages.length > 0 &&
       conversationMessages[
@@ -2315,6 +3404,9 @@ async function sendMessage() {
   } finally {
 
     isSending = false;
+
+    isVoiceQuestion =
+      false;
 
     if (askBtn) {
       askBtn.disabled = false;
@@ -2823,6 +3915,11 @@ async function openConversation(
   }
 
   try {
+
+    stopAnswerSpeech();
+
+    isVoiceQuestion =
+      false;
 
     setStatus(
       "Loading conversation..."
@@ -3618,6 +4715,13 @@ function initializeVoiceAI() {
 
       isListening = true;
 
+      /*
+      Mark this question as a Voice AI question.
+      */
+
+      isVoiceQuestion =
+        true;
+
       voiceBtn.classList.add(
         "voice-active"
       );
@@ -3687,6 +4791,16 @@ function initializeVoiceAI() {
         event.error
       );
 
+
+      /*
+      Do not let a failed Voice AI request
+      make the next typed question speak.
+      */
+
+      isVoiceQuestion =
+        false;
+
+
       setVoiceStatus(
         "Voice error: " +
         event.error
@@ -3742,6 +4856,14 @@ function initializeVoiceAI() {
       }
 
 
+      /*
+      Stop any previous answer speech
+      before recording a new question.
+      */
+
+      stopAnswerSpeech();
+
+
       try {
 
         recognition.start();
@@ -3775,27 +4897,15 @@ function speakText(text) {
   if (!text) return;
 
 
-  window.speechSynthesis.cancel();
-
-
-  const utterance =
-    new SpeechSynthesisUtterance(
-      cleanAIAnswer(text)
-    );
-
-
-  utterance.lang =
-    detectLanguage(text);
-
-  utterance.rate =
-    0.95;
-
-  utterance.pitch =
-    1;
-
-
-  window.speechSynthesis.speak(
-    utterance
+  speakAnswerAsTeacher(
+    text,
+    {
+      calculation:
+        isCalculationContent(
+          "",
+          text
+        )
+    }
   );
 }
 
@@ -4359,6 +5469,10 @@ window.RwandaAI = {
 
   speakText,
 
+  stopAnswerSpeech,
+
+  speakAnswerAsTeacher,
+
   checkBackendHealth,
 
   getBackendModels,
@@ -4376,6 +5490,8 @@ window.RwandaAI = {
   shouldSearchImages,
 
   buildImageSearchQuery,
+
+  isCalculationContent,
 
   getCurrentUser: () =>
     currentUser,
@@ -4431,6 +5547,18 @@ console.log(
 
 console.log(
   "Deep black bold answers: ENABLED"
+);
+
+console.log(
+  "Voice Auto Read: ENABLED"
+);
+
+console.log(
+  "Calculation Teacher Voice: ENABLED"
+);
+
+console.log(
+  "Speech Synchronized Auto Scroll: ENABLED"
 );
 
 console.log(
