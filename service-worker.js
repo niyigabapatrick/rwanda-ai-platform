@@ -1,130 +1,186 @@
-const CACHE_NAME = "rwanda-ai-v2";
+/*
+==========================================================
+RWANDA AI PLATFORM
+FAST PWA SERVICE WORKER
+CACHE FIRST FOR LOCAL FILES
+NETWORK FALLBACK
+==========================================================
+*/
+
+const CACHE_NAME = "rwanda-ai-v3";
+
+
+/*
+==========================================================
+FILES NEEDED FOR BASIC OFFLINE STARTUP
+==========================================================
+*/
 
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
-  "./ai.html",
   "./manifest.json",
-  "./style.css",
-  "./script.js",
-  "./firebase.js",
   "./file_00000000b77c820898e00d1280791658.png"
 ];
 
 
-self.addEventListener(
-  "install",
-  event => {
+/*
+==========================================================
+INSTALL
+==========================================================
+*/
 
-    event.waitUntil(
+self.addEventListener("install", event => {
 
-      caches.open(
-        CACHE_NAME
-      ).then(
-        cache => {
+  event.waitUntil(
 
-          return cache.addAll(
-            FILES_TO_CACHE
-          );
+    caches.open(CACHE_NAME)
 
-        }
-      ).then(
-        () => {
+      .then(cache => {
 
-          return self.skipWaiting();
+        return cache.addAll(FILES_TO_CACHE);
 
-        }
-      )
+      })
 
-    );
+      .then(() => {
 
+        return self.skipWaiting();
+
+      })
+
+  );
+
+});
+
+
+/*
+==========================================================
+ACTIVATE
+REMOVE OLD CACHES
+==========================================================
+*/
+
+self.addEventListener("activate", event => {
+
+  event.waitUntil(
+
+    caches.keys()
+
+      .then(cacheNames => {
+
+        return Promise.all(
+
+          cacheNames
+
+            .filter(name => {
+
+              return name !== CACHE_NAME;
+
+            })
+
+            .map(name => {
+
+              return caches.delete(name);
+
+            })
+
+        );
+
+      })
+
+      .then(() => {
+
+        return self.clients.claim();
+
+      })
+
+  );
+
+});
+
+
+/*
+==========================================================
+FETCH
+CACHE FIRST FOR LOCAL STATIC FILES
+==========================================================
+*/
+
+self.addEventListener("fetch", event => {
+
+  const request = event.request;
+
+
+  /*
+  Only GET requests
+  */
+
+  if (request.method !== "GET") {
+    return;
   }
-);
 
 
-self.addEventListener(
-  "activate",
-  event => {
+  const url = new URL(request.url);
 
-    event.waitUntil(
 
-      caches.keys().then(
-        cacheNames => {
+  /*
+  Ignore external websites/APIs.
 
-          return Promise.all(
+  This means Firebase, Google, Groq,
+  and other external services are not
+  controlled by this service worker.
+  */
 
-            cacheNames
-              .filter(
-                name =>
-                  name !== CACHE_NAME
-              )
-              .map(
-                name =>
-                  caches.delete(name)
-              )
-
-          );
-
-        }
-
-      ).then(
-        () => {
-
-          return self.clients.claim();
-
-        }
-      )
-
-    );
-
+  if (url.origin !== self.location.origin) {
+    return;
   }
-);
 
 
-self.addEventListener(
-  "fetch",
-  event => {
+  /*
+  Only handle normal HTTP/HTTPS requests.
+  */
 
-    const request =
-      event.request;
-
-
-    if (
-      request.method !== "GET"
-    ) {
-
-      return;
-
-    }
+  if (
+    url.protocol !== "http:" &&
+    url.protocol !== "https:"
+  ) {
+    return;
+  }
 
 
-    const url =
-      new URL(
-        request.url
-      );
+  event.respondWith(
+
+    caches.match(request)
+
+      .then(cachedResponse => {
+
+        /*
+        If the file already exists in cache,
+        return it immediately.
+
+        This makes repeated page loading
+        extremely fast.
+        */
+
+        if (cachedResponse) {
+
+          return cachedResponse;
+
+        }
 
 
-    /*
-    Do not intercept external
-    Firebase / Google / Groq requests.
-    */
+        /*
+        File is not cached.
+        Get it from the network.
+        */
 
-    if (
-      url.origin !==
-      self.location.origin
-    ) {
+        return fetch(request)
 
-      return;
+          .then(response => {
 
-    }
-
-
-    event.respondWith(
-
-      fetch(request)
-
-        .then(
-          response => {
+            /*
+            Only cache successful local responses.
+            */
 
             if (
               response &&
@@ -136,47 +192,47 @@ self.addEventListener(
                 response.clone();
 
 
-              caches.open(
-                CACHE_NAME
-              ).then(
-                cache => {
+              caches.open(CACHE_NAME)
+
+                .then(cache => {
 
                   cache.put(
                     request,
                     responseClone
                   );
 
-                }
-              );
+                });
 
             }
 
 
             return response;
 
-          }
-        )
+          })
 
-        .catch(
-          () => {
+          .catch(() => {
 
-            return caches.match(
-              request
-            ).then(
-              cachedResponse => {
+            /*
+            If there is no internet and the
+            requested file is not cached,
+            return a normal error response.
+            */
 
-                return (
-                  cachedResponse ||
-                  Response.error()
-                );
-
+            return new Response(
+              "Rwanda AI Platform is temporarily unavailable.",
+              {
+                status: 503,
+                statusText: "Service Unavailable",
+                headers: {
+                  "Content-Type": "text/plain; charset=UTF-8"
+                }
               }
             );
 
-          }
-        )
+          });
 
-    );
+      })
 
-  }
-);
+  );
+
+});
