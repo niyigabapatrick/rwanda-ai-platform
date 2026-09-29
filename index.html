@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
@@ -10,248 +9,272 @@
   content="width=device-width, initial-scale=1.0"
 >
 
-<title>Rwanda AI Platform</title>
-
-<link
-  rel="stylesheet"
-  href="./style.css"
+<meta
+  name="description"
+  content="Rwanda AI Platform - AI Assistant and private Rwanda AI Knowledge Hub."
 >
+
+<meta
+  name="theme-color"
+  content="#00a1de"
+>
+
+<title>Rwanda AI Platform</title>
 
 <style>
 
-/* =========================
-   RWANDA AI PLATFORM THEME
-========================= */
+/* =========================================================
+   RWANDA AI PLATFORM
+   FAST / LIGHTWEIGHT / MOBILE FIRST
+========================================================= */
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  min-height: 100vh;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  color: #222;
 
   background:
     linear-gradient(
       135deg,
-      #00a1de,
-      #f4c300,
-      #20603d
+      #00a1de 0%,
+      #f4c300 50%,
+      #20603d 100%
     );
 
-  min-height: 100vh;
-  color: #222;
+  -webkit-text-size-adjust: 100%;
 }
 
 
-/* =========================
+/* =========================================================
    HEADER
-========================= */
+========================================================= */
 
 header {
-
   background: #00a1de;
 
-  color: white;
+  color: #fff;
 
-  padding: 28px 20px;
+  padding: 26px 18px;
 
   text-align: center;
 
-  border-bottom:
-    6px solid #f4c300;
+  border-bottom: 5px solid #f4c300;
 
   box-shadow:
-    0 4px 12px rgba(0,0,0,0.2);
+    0 3px 10px rgba(0, 0, 0, 0.18);
 }
 
 header h1 {
-
   margin: 0;
 
   font-size: 28px;
 
-  font-weight: bold;
+  line-height: 1.2;
+
+  font-weight: 700;
 }
 
 header p {
-
-  max-width: 850px;
+  max-width: 820px;
 
   margin: 12px auto 0;
 
-  line-height: 1.6;
-
   font-size: 15px;
+
+  line-height: 1.55;
 }
 
 
-/* =========================
+/* =========================================================
    NAVIGATION
-========================= */
+========================================================= */
 
 nav {
-
-  background: #20603d;
-
   display: flex;
 
   justify-content: center;
 
+  align-items: center;
+
   flex-wrap: wrap;
 
-  gap: 8px;
+  gap: 6px;
 
-  padding: 12px;
+  padding: 10px;
+
+  background: #20603d;
 }
 
 nav a {
+  display: inline-block;
 
-  color: white;
+  color: #fff;
 
   text-decoration: none;
 
-  padding: 10px 16px;
+  padding: 9px 13px;
 
-  border-radius: 8px;
+  border-radius: 7px;
 
-  font-weight: bold;
+  font-size: 14px;
 
-  transition: 0.2s;
+  font-weight: 700;
+
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
-nav a:hover {
-
+nav a:hover,
+nav a:focus {
   background: #f4c300;
 
   color: #222;
 }
 
 
-/* =========================
+/* =========================================================
    HERO
-========================= */
+========================================================= */
 
 .hero {
+  max-width: 880px;
 
-  max-width: 900px;
+  margin: 24px auto 18px;
 
-  margin: 30px auto 20px;
+  padding: 27px 20px;
 
-  padding: 30px 25px;
+  background: #fff;
 
-  background: white;
-
-  border-radius: 18px;
+  border-radius: 16px;
 
   text-align: center;
 
-  border-top:
-    6px solid #00a1de;
+  border-top: 5px solid #00a1de;
 
   box-shadow:
-    0 8px 25px rgba(0,0,0,0.18);
+    0 6px 20px rgba(0, 0, 0, 0.16);
 }
 
 .hero h2 {
-
-  margin-top: 0;
+  margin: 0 0 10px;
 
   color: #20603d;
 
-  font-size: 27px;
+  font-size: 25px;
+
+  line-height: 1.25;
 }
 
 .hero p {
+  margin: 0;
 
-  line-height: 1.6;
+  line-height: 1.55;
 
-  margin-bottom: 0;
+  font-size: 15px;
 }
 
 
-/* =========================
+/* =========================================================
    CARDS
-========================= */
+========================================================= */
 
 .cards {
+  width: 100%;
 
-  max-width: 1100px;
+  max-width: 1080px;
 
-  margin: 25px auto 40px;
+  margin: 0 auto 35px;
 
-  padding: 20px;
+  padding: 15px;
 
   display: grid;
 
   grid-template-columns:
-    repeat(auto-fit, minmax(260px, 1fr));
+    repeat(
+      auto-fit,
+      minmax(240px, 1fr)
+    );
 
-  gap: 20px;
+  gap: 16px;
 }
-
 
 .card {
+  background: #fff;
 
-  background: white;
+  padding: 22px;
 
-  padding: 25px;
+  border-radius: 15px;
 
-  border-radius: 18px;
-
-  border-left:
-    6px solid #f4c300;
+  border-left: 5px solid #f4c300;
 
   box-shadow:
-    0 8px 25px rgba(0,0,0,0.18);
+    0 6px 20px rgba(0, 0, 0, 0.15);
 
   text-align: center;
-
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-
-.card:hover {
-
-  transform: translateY(-5px);
-
-  box-shadow:
-    0 12px 30px rgba(0,0,0,0.22);
 }
 
 .card h3 {
-
-  margin-top: 0;
+  margin: 0 0 10px;
 
   color: #00a1de;
 
-  font-size: 20px;
+  font-size: 19px;
+
+  line-height: 1.3;
 }
 
 .card p {
+  margin: 0 0 12px;
 
-  line-height: 1.6;
+  line-height: 1.5;
 
-  min-height: 50px;
+  font-size: 14px;
+
+  min-height: 43px;
 }
 
 
-/* =========================
+/* =========================================================
    BUTTONS
-========================= */
+========================================================= */
+
+.card a {
+  display: block;
+
+  text-decoration: none;
+}
 
 .card button {
-
   width: 100%;
 
-  padding: 13px;
+  min-height: 46px;
 
-  margin-top: 10px;
+  padding: 11px 14px;
 
-  border: none;
+  margin: 4px 0 0;
 
-  border-radius: 10px;
+  border: 0;
+
+  border-radius: 9px;
 
   background:
     linear-gradient(
@@ -260,53 +283,62 @@ nav a:hover {
       #20603d
     );
 
-  color: white;
+  color: #fff;
 
-  font-size: 15px;
+  font-family: inherit;
 
-  font-weight: bold;
+  font-size: 14px;
+
+  font-weight: 700;
 
   cursor: pointer;
+
+  -webkit-appearance: none;
+
+  appearance: none;
 }
 
-.card button:hover {
-
+.card button:hover,
+.card button:focus {
   opacity: 0.9;
 }
 
+.card button:active {
+  transform: scale(0.98);
+}
 
-/* =========================
+
+/* =========================================================
    FOOTER
-========================= */
+========================================================= */
 
 footer {
-
   background: #20603d;
 
-  color: white;
+  color: #fff;
 
   text-align: center;
 
-  padding: 18px;
+  padding: 16px;
 
-  border-top:
-    5px solid #f4c300;
+  border-top: 4px solid #f4c300;
 }
 
 footer p {
-
   margin: 0;
+
+  font-size: 13px;
 }
 
 
-/* =========================
+/* =========================================================
    MOBILE
-========================= */
+========================================================= */
 
 @media (max-width: 600px) {
 
   header {
-    padding: 22px 15px;
+    padding: 21px 14px;
   }
 
   header h1 {
@@ -314,25 +346,69 @@ footer p {
   }
 
   header p {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  nav {
+    padding: 8px;
+
+    gap: 5px;
   }
 
   nav a {
-    font-size: 14px;
-    padding: 9px 11px;
+    padding: 8px 10px;
+
+    font-size: 13px;
   }
 
   .hero {
-    margin: 20px 15px;
-    padding: 25px 18px;
+    margin: 18px 12px 15px;
+
+    padding: 22px 16px;
+
+    border-radius: 14px;
   }
 
   .hero h2 {
-    font-size: 23px;
+    font-size: 22px;
+  }
+
+  .hero p {
+    font-size: 14px;
   }
 
   .cards {
-    padding: 15px;
+    padding: 12px;
+
+    gap: 13px;
+  }
+
+  .card {
+    padding: 20px 17px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 360px) {
+
+  header h1 {
+    font-size: 21px;
+  }
+
+  nav a {
+    font-size: 12px;
+
+    padding: 7px 8px;
+  }
+
+  .hero h2 {
+    font-size: 20px;
   }
 
 }
@@ -345,158 +421,151 @@ footer p {
 <body>
 
 
-<!-- =========================
+<!-- =======================================================
      HEADER
-========================= -->
+======================================================= -->
 
 <header>
 
-<h1>
-🇷🇼 Rwanda AI Platform
-</h1>
+  <h1>
+    🇷🇼 Rwanda AI Platform
+  </h1>
 
-<p>
-I am Rwanda AI, an artificial intelligence platform made in Rwanda by Mr Patrick NIYIGABA, known as Cobra.
-I am designed to provide information, answer questions and assist users across many topics, with a strong focus on Science, Astronomy and World Geography.
-</p>
+  <p>
+    I am Rwanda AI, an artificial intelligence platform made in Rwanda by Mr Patrick NIYIGABA, known as Cobra.
+    I am designed to provide information, answer questions and assist users across many topics, with a strong focus on Science, Astronomy and World Geography.
+  </p>
 
 </header>
 
 
-<!-- =========================
+<!-- =======================================================
      NAVIGATION
-========================= -->
+======================================================= -->
 
-<nav>
+<nav aria-label="Main navigation">
 
-<a href="./index.html">
-Home
-</a>
+  <a href="./index.html">
+    Home
+  </a>
 
-<a href="./ai.html">
-AI Assistant
-</a>
+  <a href="./ai.html">
+    AI Assistant
+  </a>
 
-<a href="./ai-voice.html">
-🎙️ Voice AI
-</a>
+  <a href="./ai-voice.html">
+    🎙️ Voice AI
+  </a>
 
-<a href="./login.html">
-🔐 Login
-</a>
+  <a href="./login.html">
+    🔐 Login
+  </a>
 
 </nav>
 
 
-<!-- =========================
+<!-- =======================================================
      HERO
-========================= -->
+======================================================= -->
 
 <section class="hero">
 
-<h2>
-Welcome to Rwanda AI Platform
-</h2>
+  <h2>
+    Welcome to Rwanda AI Platform
+  </h2>
 
-<p>
-Intelligent AI assistance across many topics, with a strong focus on Science, Astronomy and World Geography.
-</p>
-
-</section>
-
-
-<!-- =========================
-     CARDS
-========================= -->
-
-<section class="cards">
-
-
-<!-- AI ASSISTANT -->
-
-<div class="card">
-
-<h3>
-🤖 Rwanda AI Assistant
-</h3>
-
-<p>
-Ask questions and get intelligent AI-powered answers.
-</p>
-
-<a href="./ai.html">
-
-<button type="button">
-Open AI Assistant
-</button>
-
-</a>
-
-</div>
-
-
-<!-- KNOWLEDGE HUB -->
-
-<div class="card">
-
-<h3>
-🔎 Rwanda AI Knowledge Hub
-</h3>
-
-<p>
-Search information from the private Rwanda AI knowledge database.
-</p>
-
-<a href="./knowledge.html">
-
-<button type="button">
-Open Knowledge Hub
-</button>
-
-</a>
-
-</div>
-
-
-<!-- ACCOUNT -->
-
-<div class="card">
-
-<h3>
-🔐 Rwanda AI Account
-</h3>
-
-<p>
-Login to your Rwanda AI account.
-</p>
-
-<a href="./login.html">
-
-<button type="button">
-Login
-</button>
-
-</a>
-
-</div>
-
+  <p>
+    Intelligent AI assistance across many topics, with a strong focus on Science, Astronomy and World Geography.
+  </p>
 
 </section>
 
 
-<!-- =========================
+<!-- =======================================================
+     MAIN CARDS
+======================================================= -->
+
+<main class="cards">
+
+
+  <!-- AI ASSISTANT -->
+
+  <section class="card">
+
+    <h3>
+      🤖 Rwanda AI Assistant
+    </h3>
+
+    <p>
+      Ask questions and get intelligent AI-powered answers.
+    </p>
+
+    <a href="./ai.html">
+      <button type="button">
+        Open AI Assistant
+      </button>
+    </a>
+
+  </section>
+
+
+  <!-- KNOWLEDGE HUB -->
+
+  <section class="card">
+
+    <h3>
+      🔎 Rwanda AI Knowledge Hub
+    </h3>
+
+    <p>
+      Search information from the private Rwanda AI knowledge database.
+    </p>
+
+    <a href="./knowledge.html">
+      <button type="button">
+        Open Knowledge Hub
+      </button>
+    </a>
+
+  </section>
+
+
+  <!-- ACCOUNT -->
+
+  <section class="card">
+
+    <h3>
+      🔐 Rwanda AI Account
+    </h3>
+
+    <p>
+      Login to your Rwanda AI account.
+    </p>
+
+    <a href="./login.html">
+      <button type="button">
+        Login
+      </button>
+    </a>
+
+  </section>
+
+
+</main>
+
+
+<!-- =======================================================
      FOOTER
-========================= -->
+======================================================= -->
 
 <footer>
 
-<p>
-© 2026 Rwanda AI Platform
-</p>
+  <p>
+    © 2026 Rwanda AI Platform
+  </p>
 
 </footer>
 
 
 </body>
-
 </html>
