@@ -9,9 +9,10 @@ VOICE AI
 STICKERS
 DIRECT GOOGLE IMAGE SEARCH
 CLEAN NORMAL CALCULATION ANSWERS
-VOICE AUTO READ
-CALCULATION TEACHER VOICE
-SPEECH SYNCHRONIZED AUTO SCROLL
+VOICE AUTO READ FOR VOICE QUESTIONS ONLY
+CALCULATION ANSWERS WITHOUT THEORY
+VOICE OUTPUT ON/OFF CONTROL
+NO AUTOMATIC ANSWER SCROLLING
 ==========================================================
 */
 
@@ -71,21 +72,33 @@ let isSending = false;
 let recognition = null;
 let isListening = false;
 
-/*
-Voice question flag.
-It remains true after speech recognition ends
-until the answer has been successfully displayed
-and read.
-*/
-
 let isVoiceQuestion = false;
-
-/*
-Controls automatic speech.
-*/
 
 let isSpeakingAnswer = false;
 let speechSessionId = 0;
+
+/*
+VOICE OUTPUT SETTING
+
+ON by default.
+If the user switches it OFF, the preference
+is saved in localStorage.
+*/
+
+let voiceOutputEnabled = true;
+
+try {
+
+  voiceOutputEnabled =
+    localStorage.getItem(
+      "rwandaAI_voiceOutputEnabled"
+    ) !== "false";
+
+} catch (error) {
+
+  voiceOutputEnabled = true;
+
+}
 
 let deferredInstallPrompt = null;
 
@@ -161,43 +174,42 @@ UTILITY
 */
 
 function setStatus(message) {
+
   if (statusBox) {
     statusBox.textContent = message || "";
   }
+
 }
 
 
 function setVoiceStatus(message) {
+
   if (voiceStatus) {
     voiceStatus.textContent = message || "";
   }
-}
 
-
-function scrollToAnswer() {
-  if (!answerBox) return;
-
-  setTimeout(() => {
-    answerBox.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }, 100);
 }
 
 
 function escapeHTML(text) {
+
   const div = document.createElement("div");
-  div.textContent = text == null ? "" : String(text);
+
+  div.textContent =
+    text == null ? "" : String(text);
+
   return div.innerHTML;
+
 }
 
 
 function escapeRegExp(value) {
+
   return String(value).replace(
     /[.*+?^${}()|[\]\\]/g,
     "\\$&"
   );
+
 }
 
 
@@ -215,9 +227,7 @@ async function copyAnswerText(text, button = null) {
   if (!cleanText) return;
 
   const originalText =
-    button
-      ? button.textContent
-      : "";
+    button ? button.textContent : "";
 
   try {
 
@@ -235,71 +245,51 @@ async function copyAnswerText(text, button = null) {
       const textarea =
         document.createElement("textarea");
 
-      textarea.value =
-        cleanText;
+      textarea.value = cleanText;
 
-      textarea.style.position =
-        "fixed";
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
 
-      textarea.style.opacity =
-        "0";
-
-      document.body.appendChild(
-        textarea
-      );
+      document.body.appendChild(textarea);
 
       textarea.focus();
       textarea.select();
 
-      document.execCommand(
-        "copy"
-      );
+      document.execCommand("copy");
 
-      document.body.removeChild(
-        textarea
-      );
+      document.body.removeChild(textarea);
+
     }
 
     if (button) {
 
-      button.textContent =
-        "✓ Copied";
+      button.textContent = "✓ Copied";
 
-      button.style.background =
-        "#000000";
-
-      button.style.color =
-        "#ffffff";
+      button.style.background = "#000000";
+      button.style.color = "#ffffff";
 
       setTimeout(() => {
 
         button.textContent =
           originalText || "📋 Copy";
 
-        button.style.background =
-          "";
-
-        button.style.color =
-          "";
+        button.style.background = "";
+        button.style.color = "";
 
       }, 1500);
+
     }
 
-    setStatus(
-      "Answer copied."
-    );
+    setStatus("Answer copied.");
 
   } catch (error) {
 
-    console.error(
-      "Copy answer error:",
-      error
-    );
+    console.error("Copy answer error:", error);
 
-    setStatus(
-      "Could not copy the answer."
-    );
+    setStatus("Could not copy the answer.");
+
   }
+
 }
 
 
@@ -312,6 +302,7 @@ CALCULATION CLEANING
 function superscript(value) {
 
   const map = {
+
     "0": "⁰",
     "1": "¹",
     "2": "²",
@@ -322,29 +313,36 @@ function superscript(value) {
     "7": "⁷",
     "8": "⁸",
     "9": "⁹",
+
     "+": "⁺",
     "-": "⁻",
     "=": "⁼",
+
     "(": "⁽",
     ")": "⁾",
+
     "n": "ⁿ",
     "i": "ⁱ"
+
   };
 
   return String(value || "")
     .split("")
     .map(c => map[c] || c)
     .join("");
+
 }
 
 
 function readLatexGroup(text, startIndex) {
 
   if (text[startIndex] !== "{") {
+
     return {
       content: "",
       end: startIndex
     };
+
   }
 
   let depth = 0;
@@ -356,24 +354,27 @@ function readLatexGroup(text, startIndex) {
     }
 
     if (text[i] === "}") {
+
       depth--;
 
       if (depth === 0) {
+
         return {
-          content: text.slice(
-            startIndex + 1,
-            i
-          ),
+          content: text.slice(startIndex + 1, i),
           end: i + 1
         };
+
       }
+
     }
+
   }
 
   return {
     content: text.slice(startIndex + 1),
     end: text.length
   };
+
 }
 
 
@@ -384,9 +385,7 @@ function convertLatexFractions(text) {
 
   while (i < text.length) {
 
-    if (
-      text.startsWith("\\frac", i)
-    ) {
+    if (text.startsWith("\\frac", i)) {
 
       let j = i + 5;
 
@@ -427,31 +426,33 @@ function convertLatexFractions(text) {
             );
 
           result +=
-            "(" +
-            top +
-            ")/(" +
-            bottom +
-            ")";
+            "(" + top + ")/(" + bottom + ")";
 
-          i =
-            denominator.end;
+          i = denominator.end;
 
           continue;
+
         }
+
       }
+
     }
 
     result += text[i];
+
     i++;
+
   }
 
   return result;
+
 }
 
 
 function removeLatexCommandGroups(text) {
 
   const commands = [
+
     "\\boxed",
     "\\text",
     "\\mathrm",
@@ -459,6 +460,7 @@ function removeLatexCommandGroups(text) {
     "\\mathit",
     "\\operatorname",
     "\\displaystyle"
+
   ];
 
   let result = text;
@@ -471,8 +473,7 @@ function removeLatexCommandGroups(text) {
       (index = result.indexOf(command)) !== -1
     ) {
 
-      let j =
-        index + command.length;
+      let j = index + command.length;
 
       while (
         j < result.length &&
@@ -488,6 +489,7 @@ function removeLatexCommandGroups(text) {
           result.slice(j);
 
         continue;
+
       }
 
       const group =
@@ -497,16 +499,20 @@ function removeLatexCommandGroups(text) {
         result.slice(0, index) +
         group.content +
         result.slice(group.end);
+
     }
+
   }
 
   return result;
+
 }
 
 
 function convertSquareRoots(text) {
 
   let result = text;
+
   let safety = 0;
 
   while (
@@ -519,8 +525,7 @@ function convertSquareRoots(text) {
     const index =
       result.indexOf("\\sqrt");
 
-    let j =
-      index + 5;
+    let j = index + 5;
 
     while (
       j < result.length &&
@@ -537,6 +542,7 @@ function convertSquareRoots(text) {
       if (close !== -1) {
         j = close + 1;
       }
+
     }
 
     while (
@@ -561,10 +567,9 @@ function convertSquareRoots(text) {
     } else {
 
       const match =
-        result.slice(j)
-          .match(
-            /^[A-Za-z0-9]+/
-          );
+        result.slice(j).match(
+          /^[A-Za-z0-9]+/
+        );
 
       if (match) {
 
@@ -582,11 +587,15 @@ function convertSquareRoots(text) {
         result =
           result.slice(0, index) +
           result.slice(j);
+
       }
+
     }
+
   }
 
   return result;
+
 }
 
 
@@ -656,24 +665,22 @@ function replaceLatexSymbols(text) {
 
     "\\%": "%",
     "\\degree": "°"
+
   };
 
   let result = text;
 
   Object.keys(symbols).forEach(command => {
 
-    result =
-      result.replace(
-        new RegExp(
-          escapeRegExp(command),
-          "g"
-        ),
-        symbols[command]
-      );
+    result = result.replace(
+      new RegExp(escapeRegExp(command), "g"),
+      symbols[command]
+    );
 
   });
 
   return result;
+
 }
 
 
@@ -681,45 +688,40 @@ function convertPowers(text) {
 
   let result = text;
 
-  result =
-    result.replace(
-      /\^\s*\{([^{}]+)\}/g,
-      (match, power) =>
-        superscript(power)
-    );
+  result = result.replace(
+    /\^\s*\{([^{}]+)\}/g,
+    (match, power) => superscript(power)
+  );
 
-  result =
-    result.replace(
-      /\^\s*([0-9]+)/g,
-      (match, power) =>
-        superscript(power)
-    );
+  result = result.replace(
+    /\^\s*([0-9]+)/g,
+    (match, power) => superscript(power)
+  );
 
-  result =
-    result.replace(
-      /\^\s*n\b/g,
-      "ⁿ"
-    );
+  result = result.replace(
+    /\^\s*n\b/g,
+    "ⁿ"
+  );
 
-  result =
-    result.replace(
-      /\^\s*i\b/g,
-      "ⁱ"
-    );
+  result = result.replace(
+    /\^\s*i\b/g,
+    "ⁱ"
+  );
 
-  result =
-    result.replace(
-      /\^\s*/g,
-      ""
-    );
+  result = result.replace(
+    /\^\s*/g,
+    ""
+  );
 
   return result;
+
 }
 
 
 function convertSubscripts(text) {
 
   const subMap = {
+
     "0": "₀",
     "1": "₁",
     "2": "₂",
@@ -730,195 +732,125 @@ function convertSubscripts(text) {
     "7": "₇",
     "8": "₈",
     "9": "₉",
+
     "+": "₊",
     "-": "₋",
+
     "(": "₍",
     ")": "₎",
+
     "n": "ₙ"
+
   };
 
   let result = text;
 
-  result =
-    result.replace(
-      /_\s*\{([^{}]+)\}/g,
-      (match, sub) =>
-        sub
-          .split("")
-          .map(c => subMap[c] || c)
-          .join("")
-    );
+  result = result.replace(
+    /_\s*\{([^{}]+)\}/g,
+    (match, sub) =>
+      sub.split("")
+        .map(c => subMap[c] || c)
+        .join("")
+  );
 
-  result =
-    result.replace(
-      /_\s*([0-9]+)/g,
-      (match, sub) =>
-        sub
-          .split("")
-          .map(c => subMap[c] || c)
-          .join("")
-    );
+  result = result.replace(
+    /_\s*([0-9]+)/g,
+    (match, sub) =>
+      sub.split("")
+        .map(c => subMap[c] || c)
+        .join("")
+  );
 
   return result;
+
 }
 
 
 function cleanMathematics(text) {
 
-  let answer =
-    String(text || "");
+  let answer = String(text || "");
 
-  answer =
-    answer.replace(
-      /≤ft/g,
-      "("
-    );
+  answer = answer.replace(/≤ft/g, "(");
 
-  answer =
-    answer.replace(
-      /≥ight/g,
-      ")"
-    );
+  answer = answer.replace(/≥ight/g, ")");
 
-  answer =
-    answer.replace(
-      /\\left/g,
-      ""
-    );
+  answer = answer.replace(/\\left/g, "");
 
-  answer =
-    answer.replace(
-      /\\right/g,
-      ""
-    );
+  answer = answer.replace(/\\right/g, "");
 
-  answer =
-    answer.replace(
-      /\$\$/g,
-      ""
-    );
+  answer = answer.replace(/\$\$/g, "");
 
-  answer =
-    answer.replace(
-      /\$/g,
-      ""
-    );
+  answer = answer.replace(/\$/g, "");
 
-  answer =
-    answer.replace(
-      /\\\(/g,
-      ""
-    );
+  answer = answer.replace(/\\\(/g, "");
 
-  answer =
-    answer.replace(
-      /\\\)/g,
-      ""
-    );
+  answer = answer.replace(/\\\)/g, "");
 
-  answer =
-    answer.replace(
-      /\\\[/g,
-      ""
-    );
+  answer = answer.replace(/\\\[/g, "");
 
-  answer =
-    answer.replace(
-      /\\\]/g,
-      ""
-    );
+  answer = answer.replace(/\\\]/g, "");
 
-  answer =
-    convertLatexFractions(
-      answer
-    );
+  answer = convertLatexFractions(answer);
 
-  answer =
-    convertSquareRoots(
-      answer
-    );
+  answer = convertSquareRoots(answer);
 
-  answer =
-    removeLatexCommandGroups(
-      answer
-    );
+  answer = removeLatexCommandGroups(answer);
 
-  answer =
-    replaceLatexSymbols(
-      answer
-    );
+  answer = replaceLatexSymbols(answer);
 
-  answer =
-    convertPowers(
-      answer
-    );
+  answer = convertPowers(answer);
 
-  answer =
-    convertSubscripts(
-      answer
-    );
+  answer = convertSubscripts(answer);
 
-  answer =
-    answer.replace(
-      /d\)\s*\/\s*\(dx\)/gi,
-      "d/dx"
-    );
+  answer = answer.replace(
+    /d\)\s*\/\s*\(dx\)/gi,
+    "d/dx"
+  );
 
-  answer =
-    answer.replace(
-      /d\s*\/\s*\(dx\)/gi,
-      "d/dx"
-    );
+  answer = answer.replace(
+    /d\s*\/\s*\(dx\)/gi,
+    "d/dx"
+  );
 
-  answer =
-    answer.replace(
-      /\(dx\)/gi,
-      "dx"
-    );
+  answer = answer.replace(
+    /\(dx\)/gi,
+    "dx"
+  );
 
-  answer =
-    answer.replace(
-      /\\[A-Za-z]+/g,
-      ""
-    );
+  answer = answer.replace(
+    /\\[A-Za-z]+/g,
+    ""
+  );
 
-  answer =
-    answer.replace(
-      /\\[\s,;!:]+/g,
-      " "
-    );
+  answer = answer.replace(
+    /\\[\s,;!:]+/g,
+    " "
+  );
 
-  answer =
-    answer.replace(
-      /[{}]/g,
-      ""
-    );
+  answer = answer.replace(/[{}]/g, "");
 
-  answer =
-    answer.replace(
-      /\bboxed\b(?=\s*[:=])/gi,
-      ""
-    );
+  answer = answer.replace(
+    /\bboxed\b(?=\s*[:=])/gi,
+    ""
+  );
 
-  answer =
-    answer.replace(
-      /\bfrac\b(?=\s*\()/gi,
-      ""
-    );
+  answer = answer.replace(
+    /\bfrac\b(?=\s*\()/gi,
+    ""
+  );
 
-  answer =
-    answer.replace(
-      /\bsqrt\b(?=\s*\()/gi,
-      "√"
-    );
+  answer = answer.replace(
+    /\bsqrt\b(?=\s*\()/gi,
+    "√"
+  );
 
-  answer =
-    answer.replace(
-      /[ \t]{2,}/g,
-      " "
-    );
+  answer = answer.replace(
+    /[ \t]{2,}/g,
+    " "
+  );
 
   return answer;
+
 }
 
 
@@ -935,90 +867,70 @@ function cleanAIAnswer(text) {
     text === undefined ||
     String(text).trim() === ""
   ) {
+
     return "Rwanda AI did not return an answer.";
+
   }
 
-  let answer =
-    String(text);
+  let answer = String(text);
 
-  answer =
-    answer.replace(
-      /```[a-zA-Z0-9_-]*/g,
-      ""
-    );
+  answer = answer.replace(
+    /```[a-zA-Z0-9_-]*/g,
+    ""
+  );
 
-  answer =
-    answer.replace(
-      /```/g,
-      ""
-    );
+  answer = answer.replace(/```/g, "");
 
-  answer =
-    cleanMathematics(
-      answer
-    );
+  answer = cleanMathematics(answer);
 
-  answer =
-    answer.replace(
-      /^\s*#{1,6}\s*/gm,
-      ""
-    );
+  answer = answer.replace(
+    /^\s*#{1,6}\s*/gm,
+    ""
+  );
 
-  answer =
-    answer.replace(
-      /^\s*[-*]\s+/gm,
-      "• "
-    );
+  answer = answer.replace(
+    /^\s*[-*]\s+/gm,
+    "• "
+  );
 
-  answer =
-    answer.replace(
-      /^\s*[-_=]{3,}\s*$/gm,
-      ""
-    );
+  answer = answer.replace(
+    /^\s*[-_=]{3,}\s*$/gm,
+    ""
+  );
 
-  answer =
-    answer.replace(
-      /¥/g,
-      ""
-    );
+  answer = answer.replace(/¥/g, "");
 
-  answer =
-    answer.replace(
-      /\n{4,}/g,
-      "\n\n"
-    );
+  answer = answer.replace(
+    /\n{4,}/g,
+    "\n\n"
+  );
 
-  answer =
-    answer.replace(
-      /[ \t]+\n/g,
-      "\n"
-    );
+  answer = answer.replace(
+    /[ \t]+\n/g,
+    "\n"
+  );
 
   return answer.trim();
+
 }
 
 
 /*
 ==========================================================
-ANSWER COPY BUTTON HTML
+ANSWER COPY BUTTON
 ==========================================================
 */
 
 function createCopyButton(text) {
 
   const button =
-    document.createElement(
-      "button"
-    );
+    document.createElement("button");
 
-  button.type =
-    "button";
+  button.type = "button";
 
-  button.textContent =
-    "📋 Copy";
+  button.textContent = "📋 Copy";
 
-  button.className =
-    "rwanda-ai-copy-button";
+  button.className = "rwanda-ai-copy-button";
 
   button.style.cssText =
     "display:inline-flex;" +
@@ -1035,17 +947,14 @@ function createCopyButton(text) {
     "font-size:13px;" +
     "cursor:pointer;";
 
-  button.addEventListener(
-    "click",
-    () => {
-      copyAnswerText(
-        text,
-        button
-      );
-    }
-  );
+  button.addEventListener("click", () => {
+
+    copyAnswerText(text, button);
+
+  });
 
   return button;
+
 }
 
 
@@ -1055,22 +964,13 @@ SPEECH / CALCULATION HELPERS
 ==========================================================
 */
 
-/*
-Detect whether the question/answer is primarily
-a calculation or a mathematical/scientific derivation.
-*/
+function isCalculationContent(question, answer) {
 
-function isCalculationContent(
-  question,
-  answer
-) {
-
-  const text =
-    (
-      String(question || "") +
-      " " +
-      String(answer || "")
-    ).toLowerCase();
+  const text = (
+    String(question || "") +
+    " " +
+    String(answer || "")
+  ).toLowerCase();
 
   const calculationPatterns = [
 
@@ -1117,28 +1017,21 @@ function isCalculationContent(
   ];
 
   return calculationPatterns.some(
-    pattern =>
-      pattern.test(text)
+    pattern => pattern.test(text)
   );
+
 }
 
 
 /*
-Convert mathematical notation into something that
-the browser's speech engine can pronounce more naturally.
-
-This DOES NOT change the visible answer.
-It only changes the spoken version.
+==========================================================
+SPEECH FRIENDLY MATHEMATICS
+==========================================================
 */
 
 function makeSpeechFriendlyMath(text) {
 
-  let value =
-    String(text || "");
-
-  /*
-  Unicode superscripts
-  */
+  let value = String(text || "");
 
   const superscriptSpeech = {
 
@@ -1164,263 +1057,122 @@ function makeSpeechFriendlyMath(text) {
     "₇": " seven",
     "₈": " eight",
     "₉": " nine"
+
   };
 
-  Object.keys(
-    superscriptSpeech
-  ).forEach(symbol => {
+  Object.keys(superscriptSpeech).forEach(symbol => {
 
-    value =
-      value.replace(
-        new RegExp(
-          symbol,
-          "g"
-        ),
-        superscriptSpeech[symbol]
-      );
+    value = value.replace(
+      new RegExp(symbol, "g"),
+      superscriptSpeech[symbol]
+    );
 
   });
 
+  value = value.replace(
+    /√\((.*?)\)/g,
+    "square root of $1"
+  );
 
-  /*
-  Mathematical symbols
-  */
+  value = value.replace(
+    /√([A-Za-z0-9]+)/g,
+    "square root of $1"
+  );
 
-  value =
-    value.replace(
-      /√\((.*?)\)/g,
-      "square root of $1"
-    );
+  value = value.replace(/×/g, " times ");
 
-  value =
-    value.replace(
-      /√([A-Za-z0-9]+)/g,
-      "square root of $1"
-    );
+  value = value.replace(/÷/g, " divided by ");
 
-  value =
-    value.replace(
-      /×/g,
-      " times "
-    );
+  value = value.replace(/±/g, " plus or minus ");
 
-  value =
-    value.replace(
-      /÷/g,
-      " divided by "
-    );
+  value = value.replace(/≤/g, " less than or equal to ");
 
-  value =
-    value.replace(
-      /±/g,
-      " plus or minus "
-    );
+  value = value.replace(/≥/g, " greater than or equal to ");
 
-  value =
-    value.replace(
-      /≤/g,
-      " less than or equal to "
-    );
+  value = value.replace(/≠/g, " not equal to ");
 
-  value =
-    value.replace(
-      /≥/g,
-      " greater than or equal to "
-    );
+  value = value.replace(/≈/g, " approximately equal to ");
 
-  value =
-    value.replace(
-      /≠/g,
-      " not equal to "
-    );
+  value = value.replace(/∞/g, " infinity ");
 
-  value =
-    value.replace(
-      /≈/g,
-      " approximately equal to "
-    );
+  value = value.replace(/∫/g, " integral ");
 
-  value =
-    value.replace(
-      /∞/g,
-      " infinity "
-    );
+  value = value.replace(/∂/g, " partial derivative ");
 
-  value =
-    value.replace(
-      /∫/g,
-      " integral "
-    );
+  value = value.replace(/∇/g, " nabla ");
 
-  value =
-    value.replace(
-      /∂/g,
-      " partial derivative "
-    );
+  value = value.replace(/→/g, " approaches ");
 
-  value =
-    value.replace(
-      /∇/g,
-      " nabla "
-    );
+  value = value.replace(/π/g, " pi ");
 
-  value =
-    value.replace(
-      /→/g,
-      " approaches "
-    );
+  value = value.replace(/Σ/g, " sum ");
 
-  value =
-    value.replace(
-      /π/g,
-      " pi "
-    );
+  value = value.replace(/Π/g, " product ");
 
-  value =
-    value.replace(
-      /Σ/g,
-      " sum "
-    );
+  value = value.replace(/Δ/g, " delta ");
 
-  value =
-    value.replace(
-      /Π/g,
-      " product "
-    );
+  value = value.replace(/Γ/g, " gamma ");
 
-  value =
-    value.replace(
-      /Δ/g,
-      " delta "
-    );
+  value = value.replace(/ζ/g, " zeta ");
 
-  value =
-    value.replace(
-      /Γ/g,
-      " gamma "
-    );
+  value = value.replace(
+    /\(([^()]+)\)\/\(([^()]+)\)/g,
+    "the quantity $1 divided by the quantity $2"
+  );
 
-  value =
-    value.replace(
-      /ζ/g,
-      " zeta "
-    );
+  value = value.replace(
+    /\b(\d+)\s*\/\s*(\d+)\b/g,
+    "$1 divided by $2"
+  );
 
+  value = value.replace(
+    /\bd\/dx\b/gi,
+    "d by d x"
+  );
 
-  /*
-  Fractions such as (a)/(b)
-  */
+  value = value.replace(
+    /\bStep\s+(\d+)\s*:/gi,
+    "Step $1. "
+  );
 
-  value =
-    value.replace(
-      /\(([^()]+)\)\/\(([^()]+)\)/g,
-      "the quantity $1 divided by the quantity $2"
-    );
+  value = value.replace(
+    /\bTherefore\b/gi,
+    "Therefore, "
+  );
 
+  value = value.replace(
+    /\bThus\b/gi,
+    "Thus, "
+  );
 
-  /*
-  Simple slash fractions.
-  */
+  value = value.replace(
+    /\bHence\b/gi,
+    "Hence, "
+  );
 
-  value =
-    value.replace(
-      /\b(\d+)\s*\/\s*(\d+)\b/g,
-      "$1 divided by $2"
-    );
+  value = value.replace(
+    /\s*=\s*/g,
+    " equals "
+  );
 
+  value = value.replace(
+    /\s*\+\s*/g,
+    " plus "
+  );
 
-  /*
-  d/dx
-  */
+  value = value.replace(
+    /\s*-\s*/g,
+    " minus "
+  );
 
-  value =
-    value.replace(
-      /\bd\/dx\b/gi,
-      "d by d x"
-    );
+  value = value.replace(/\(/g, " ");
 
+  value = value.replace(/\)/g, " ");
 
-  /*
-  Common calculation words.
-  */
-
-  value =
-    value.replace(
-      /\bStep\s+(\d+)\s*:/gi,
-      "Step $1. "
-    );
-
-  value =
-    value.replace(
-      /\bTherefore\b/gi,
-      "Therefore, "
-    );
-
-  value =
-    value.replace(
-      /\bThus\b/gi,
-      "Thus, "
-    );
-
-  value =
-    value.replace(
-      /\bHence\b/gi,
-      "Hence, "
-    );
-
-
-  /*
-  Make equations pause naturally.
-  */
-
-  value =
-    value.replace(
-      /\s*=\s*/g,
-      " equals "
-    );
-
-  value =
-    value.replace(
-      /\s*\+\s*/g,
-      " plus "
-    );
-
-  value =
-    value.replace(
-      /\s*-\s*/g,
-      " minus "
-    );
-
-
-  /*
-  Parentheses become small verbal pauses.
-  */
-
-  value =
-    value.replace(
-      /\(/g,
-      " "
-    );
-
-  value =
-    value.replace(
-      /\)/g,
-      " "
-    );
-
-
-  /*
-  Clean repeated spaces.
-  */
-
-  value =
-    value.replace(
-      /\s{2,}/g,
-      " "
-    );
-
+  value = value.replace(/\s{2,}/g, " ");
 
   return value.trim();
+
 }
 
 
@@ -1430,39 +1182,18 @@ SPEECH SEGMENTS
 ==========================================================
 */
 
-/*
-Split the visible answer into meaningful pieces.
+function createSpeechSegments(text, calculation = false) {
 
-For calculations, each line is preferred because it
-normally represents one step.
+  const cleaned = cleanAIAnswer(text);
 
-For ordinary answers, sentences are used.
-*/
+  if (!cleaned) return [];
 
-function createSpeechSegments(
-  text,
-  calculation = false
-) {
-
-  const cleaned =
-    cleanAIAnswer(text);
-
-  if (!cleaned) {
-    return [];
-  }
-
-
-  const lines =
-    cleaned
-      .split(/\n+/)
-      .map(
-        line => line.trim()
-      )
-      .filter(Boolean);
-
+  const lines = cleaned
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean);
 
   const segments = [];
-
 
   lines.forEach(line => {
 
@@ -1471,48 +1202,36 @@ function createSpeechSegments(
       line.length < 140
     ) {
 
-      /*
-      Keep numbered calculation steps together.
-      */
-
       segments.push(line);
 
       return;
+
     }
 
-
-    /*
-    Long normal-answer lines are divided
-    into sentences.
-    */
-
     const sentenceParts =
-      line.match(
-        /[^.!?]+[.!?]+|[^.!?]+$/g
-      ) || [line];
+      line.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [line];
 
+    sentenceParts.forEach(part => {
 
-    sentenceParts.forEach(
-      part => {
+      const clean = part.trim();
 
-        const clean =
-          part.trim();
-
-        if (clean) {
-          segments.push(clean);
-        }
+      if (clean) {
+        segments.push(clean);
       }
-    );
+
+    });
+
   });
 
-
   return segments;
+
 }
 
 
 /*
 ==========================================================
-RENDER SPEECH-SYNC ANSWER
+RENDER ANSWER
+NO AUTOMATIC SCROLLING
 ==========================================================
 */
 
@@ -1522,87 +1241,56 @@ function renderSpeechSynchronizedAnswer(
 ) {
 
   const calculation =
-    isCalculationContent(
-      "",
-      cleaned
-    );
+    isCalculationContent("", cleaned);
 
   const segments =
-    createSpeechSegments(
-      cleaned,
-      calculation
-    );
+    createSpeechSegments(cleaned, calculation);
 
-
-  if (
-    segments.length === 0
-  ) {
+  if (segments.length === 0) {
 
     answerContent.innerHTML =
       escapeHTML(cleaned)
-        .replace(
-          /\*\*(.*?)\*\*/g,
-          "<strong>$1</strong>"
-        )
-        .replace(
-          /\n/g,
-          "<br>"
-        );
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>");
 
     return;
+
   }
 
+  answerContent.innerHTML = "";
 
-  /*
-  Build a fresh visible representation
-  using speech segments.
-  */
+  segments.forEach((segment, index) => {
 
-  answerContent.innerHTML =
-    "";
+    const span =
+      document.createElement("span");
 
+    span.className =
+      "rwanda-ai-speech-segment";
 
-  segments.forEach(
-    (segment, index) => {
+    span.dataset.speechIndex =
+      String(index);
 
-      const span =
-        document.createElement(
-          "span"
-        );
+    span.style.cssText =
+      "display:block;" +
+      "border-radius:6px;" +
+      "padding:2px 3px;" +
+      "margin:1px 0;";
 
-      span.className =
-        "rwanda-ai-speech-segment";
+    span.innerHTML =
+      escapeHTML(segment)
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
-      span.dataset.speechIndex =
-        String(index);
+    answerContent.appendChild(span);
 
-      span.style.cssText =
-        "display:block;" +
-        "scroll-margin-top:20px;" +
-        "transition:background .25s ease, opacity .25s ease;" +
-        "border-radius:6px;" +
-        "padding:2px 3px;" +
-        "margin:1px 0;";
+  });
 
-      span.innerHTML =
-        escapeHTML(segment)
-          .replace(
-            /\*\*(.*?)\*\*/g,
-            "<strong>$1</strong>"
-          );
-
-
-      answerContent.appendChild(
-        span
-      );
-    }
-  );
 }
 
 
 /*
 ==========================================================
 HIGHLIGHT ACTIVE SPEECH SEGMENT
+NO AUTO SCROLL
 ==========================================================
 */
 
@@ -1615,26 +1303,20 @@ function clearSpeechHighlight() {
       ".rwanda-ai-speech-segment"
     );
 
-  segments.forEach(
-    segment => {
+  segments.forEach(segment => {
 
-      segment.style.background =
-        "";
+    segment.style.background = "";
 
-      segment.style.opacity =
-        "";
+    segment.style.opacity = "";
 
-      segment.removeAttribute(
-        "aria-current"
-      );
-    }
-  );
+    segment.removeAttribute("aria-current");
+
+  });
+
 }
 
 
-function highlightSpeechSegment(
-  index
-) {
+function highlightSpeechSegment(index) {
 
   if (!answerBox) return;
 
@@ -1643,60 +1325,29 @@ function highlightSpeechSegment(
       ".rwanda-ai-speech-segment"
     );
 
-  if (
-    !segments.length
-  ) {
-    return;
-  }
+  if (!segments.length) return;
 
+  segments.forEach(segment => {
 
-  segments.forEach(
-    segment => {
+    segment.style.background = "";
 
-      segment.style.background =
-        "";
+    segment.style.opacity = "";
 
-      segment.style.opacity =
-        "";
+    segment.removeAttribute("aria-current");
 
-      segment.removeAttribute(
-        "aria-current"
-      );
-    }
-  );
+  });
 
-
-  const active =
-    segments[index];
+  const active = segments[index];
 
   if (!active) return;
-
-
-  /*
-  Subtle visual indication of the
-  exact part currently being spoken.
-  */
 
   active.style.background =
     "rgba(255, 235, 59, 0.18)";
 
-  active.style.opacity =
-    "1";
+  active.style.opacity = "1";
 
-  active.setAttribute(
-    "aria-current",
-    "true"
-  );
+  active.setAttribute("aria-current", "true");
 
-
-  /*
-  Automatic synchronized scrolling.
-  */
-
-  active.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
 }
 
 
@@ -1706,27 +1357,214 @@ STOP SPEECH
 ==========================================================
 */
 
-function stopAnswerSpeech(
-  clearHighlight = true
-) {
+function stopAnswerSpeech(clearHighlight = true) {
 
   speechSessionId++;
 
-  isSpeakingAnswer =
-    false;
+  isSpeakingAnswer = false;
 
-  if (
-    "speechSynthesis" in window
-  ) {
+  if ("speechSynthesis" in window) {
 
     window.speechSynthesis.cancel();
+
   }
 
   if (clearHighlight) {
+
     clearSpeechHighlight();
+
   }
 
   setVoiceStatus("");
+
+}
+
+
+/*
+==========================================================
+VOICE OUTPUT ON / OFF BUTTON
+==========================================================
+*/
+
+let voiceOutputBtn = null;
+
+
+function updateVoiceOutputButton() {
+
+  if (!voiceOutputBtn) return;
+
+  if (voiceOutputEnabled) {
+
+    voiceOutputBtn.textContent = "🔊 Voice ON";
+
+    voiceOutputBtn.setAttribute(
+      "aria-label",
+      "Turn answer voice OFF"
+    );
+
+    voiceOutputBtn.setAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    voiceOutputBtn.title =
+      "Answer reading voice is ON. Tap to turn it OFF.";
+
+    voiceOutputBtn.style.background =
+      "#000000";
+
+    voiceOutputBtn.style.color =
+      "#ffffff";
+
+    voiceOutputBtn.style.borderColor =
+      "#000000";
+
+  } else {
+
+    voiceOutputBtn.textContent = "🔇 Voice OFF";
+
+    voiceOutputBtn.setAttribute(
+      "aria-label",
+      "Turn answer voice ON"
+    );
+
+    voiceOutputBtn.setAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    voiceOutputBtn.title =
+      "Answer reading voice is OFF. Tap to turn it ON.";
+
+    voiceOutputBtn.style.background =
+      "#ffffff";
+
+    voiceOutputBtn.style.color =
+      "#000000";
+
+    voiceOutputBtn.style.borderColor =
+      "#000000";
+
+  }
+
+}
+
+
+function setVoiceOutputEnabled(enabled) {
+
+  voiceOutputEnabled = enabled === true;
+
+  try {
+
+    localStorage.setItem(
+      "rwandaAI_voiceOutputEnabled",
+      voiceOutputEnabled ? "true" : "false"
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "Could not save voice output preference:",
+      error
+    );
+
+  }
+
+  updateVoiceOutputButton();
+
+  if (!voiceOutputEnabled) {
+
+    /*
+    Stop any speech currently playing.
+    This also invalidates pending speech segments
+    and pending speech timers.
+    */
+
+    stopAnswerSpeech();
+
+    setVoiceStatus("Answer voice is OFF.");
+
+    setStatus("Answer reading voice turned OFF.");
+
+  } else {
+
+    setVoiceStatus("Answer voice is ON.");
+
+    setStatus("Answer reading voice turned ON.");
+
+  }
+
+}
+
+
+function initializeVoiceOutputButton() {
+
+  if (voiceOutputBtn) return;
+
+  voiceOutputBtn =
+    document.createElement("button");
+
+  voiceOutputBtn.type = "button";
+
+  voiceOutputBtn.id =
+    "voiceOutputToggleBtn";
+
+  voiceOutputBtn.className =
+    "rwanda-ai-voice-output-toggle";
+
+  voiceOutputBtn.style.cssText =
+    "display:inline-flex;" +
+    "align-items:center;" +
+    "justify-content:center;" +
+    "gap:6px;" +
+    "margin:6px;" +
+    "padding:9px 13px;" +
+    "border:1px solid #000000;" +
+    "border-radius:9px;" +
+    "font-size:13px;" +
+    "font-weight:800;" +
+    "cursor:pointer;" +
+    "min-height:38px;";
+
+  voiceOutputBtn.addEventListener("click", () => {
+
+    setVoiceOutputEnabled(
+      !voiceOutputEnabled
+    );
+
+  });
+
+  /*
+  Place the new button next to the existing
+  Voice AI input button.
+
+  It does not replace or modify voiceBtn.
+  */
+
+  if (voiceBtn && voiceBtn.parentNode) {
+
+    voiceBtn.insertAdjacentElement(
+      "afterend",
+      voiceOutputBtn
+    );
+
+  } else if (askBtn && askBtn.parentNode) {
+
+    askBtn.insertAdjacentElement(
+      "afterend",
+      voiceOutputBtn
+    );
+
+  } else {
+
+    document.body.appendChild(
+      voiceOutputBtn
+    );
+
+  }
+
+  updateVoiceOutputButton();
+
 }
 
 
@@ -1736,62 +1574,56 @@ SPEECH LANGUAGE
 ==========================================================
 */
 
-function getSpeechLanguage(
-  text,
-  calculation = false
-) {
+function getSpeechLanguage(text, calculation = false) {
 
   if (calculation) {
-
-    /*
-    Most mathematical/scientific terminology
-    is pronounced more consistently in English
-    by Android browser speech engines.
-    */
-
     return "en-US";
   }
 
   return detectLanguage(text);
+
 }
 
 
 /*
 ==========================================================
-TEACHER-STYLE SPEECH
+VOICE ANSWER READER
+VOICE QUESTIONS ONLY
+VOICE OUTPUT MUST BE ON
 ==========================================================
 */
 
-function speakAnswerAsTeacher(
-  text,
-  options = {}
-) {
+function speakAnswerAsTeacher(text, options = {}) {
 
-  if (
-    !("speechSynthesis" in window)
-  ) {
+  /*
+  Do not start speech when Voice Output is OFF.
+  */
+
+  if (!voiceOutputEnabled) {
+
+    stopAnswerSpeech();
+
+    return;
+
+  }
+
+  if (!("speechSynthesis" in window)) {
+
     setVoiceStatus(
       "Text-to-speech is not supported by this browser."
     );
 
     return;
+
   }
 
-
-  const cleaned =
-    cleanAIAnswer(text);
+  const cleaned = cleanAIAnswer(text);
 
   if (!cleaned) return;
 
+  stopAnswerSpeech(false);
 
-  stopAnswerSpeech(
-    false
-  );
-
-
-  const session =
-    speechSessionId;
-
+  const session = speechSessionId;
 
   const calculation =
     options.calculation === true ||
@@ -1800,212 +1632,143 @@ function speakAnswerAsTeacher(
       cleaned
     );
 
-
   const segments =
-    createSpeechSegments(
-      cleaned,
-      calculation
-    );
+    createSpeechSegments(cleaned, calculation);
 
+  if (!segments.length) return;
 
-  if (!segments.length) {
-    return;
-  }
-
-
-  isSpeakingAnswer =
-    true;
-
+  isSpeakingAnswer = true;
 
   let currentIndex = 0;
 
-
-  /*
-  Speech pauses are intentionally slightly
-  slower for calculations so the user can
-  follow the displayed steps.
-  */
-
   const speechRate =
-    calculation
-      ? 0.88
-      : 0.95;
+    calculation ? 0.88 : 0.95;
 
 
   function speakNext() {
 
+    /*
+    Stop if the session changed or voice was disabled.
+    */
+
     if (
-      session !== speechSessionId
+      session !== speechSessionId ||
+      !voiceOutputEnabled
     ) {
       return;
     }
 
+    if (currentIndex >= segments.length) {
 
-    if (
-      currentIndex >=
-      segments.length
-    ) {
-
-      isSpeakingAnswer =
-        false;
+      isSpeakingAnswer = false;
 
       clearSpeechHighlight();
 
-      setVoiceStatus(
-        "Answer finished."
-      );
+      setVoiceStatus("Answer finished.");
 
       setTimeout(() => {
 
         if (
-          session ===
-          speechSessionId
+          session === speechSessionId &&
+          voiceOutputEnabled
         ) {
-
           setVoiceStatus("");
         }
 
       }, 1800);
 
       return;
+
     }
 
+    const segment = segments[currentIndex];
 
-    const segment =
-      segments[currentIndex];
-
-
-    highlightSpeechSegment(
-      currentIndex
-    );
-
+    highlightSpeechSegment(currentIndex);
 
     const spokenText =
       calculation
-        ? makeSpeechFriendlyMath(
-            segment
-          )
+        ? makeSpeechFriendlyMath(segment)
         : segment;
 
-
     const utterance =
-      new SpeechSynthesisUtterance(
-        spokenText
-      );
-
+      new SpeechSynthesisUtterance(spokenText);
 
     utterance.lang =
-      getSpeechLanguage(
-        segment,
+      getSpeechLanguage(segment, calculation);
+
+    utterance.rate = speechRate;
+
+    utterance.pitch = 1;
+
+    utterance.volume = 1;
+
+    utterance.onstart = () => {
+
+      if (
+        session !== speechSessionId ||
+        !voiceOutputEnabled
+      ) {
+        return;
+      }
+
+      setVoiceStatus(
         calculation
+          ? "Rwanda AI is explaining the calculation..."
+          : "Rwanda AI is reading the answer..."
       );
 
+    };
 
-    utterance.rate =
-      speechRate;
+    utterance.onend = () => {
 
+      if (
+        session !== speechSessionId ||
+        !voiceOutputEnabled
+      ) {
+        return;
+      }
 
-    utterance.pitch =
-      1;
+      currentIndex++;
 
+      const pause =
+        calculation ? 280 : 120;
 
-    /*
-    Slightly louder and clearer teacher-like
-    speech where supported by the browser.
-    */
-
-    utterance.volume =
-      1;
-
-
-    utterance.onstart =
-      () => {
+      setTimeout(() => {
 
         if (
-          session !== speechSessionId
+          session === speechSessionId &&
+          voiceOutputEnabled
         ) {
-          return;
+          speakNext();
         }
 
-        setVoiceStatus(
-          calculation
-            ? "Rwanda AI is explaining the calculation..."
-            : "Rwanda AI is reading the answer..."
-        );
-      };
+      }, pause);
 
+    };
 
-    utterance.onend =
-      () => {
+    utterance.onerror = event => {
 
-        if (
-          session !== speechSessionId
-        ) {
-          return;
-        }
+      if (session !== speechSessionId) return;
 
+      console.warn(
+        "Speech synthesis error:",
+        event.error
+      );
 
-        currentIndex++;
+      isSpeakingAnswer = false;
 
+      clearSpeechHighlight();
 
-        /*
-        Small pause between teacher steps.
-        */
+      setVoiceStatus("");
 
-        const pause =
-          calculation
-            ? 280
-            : 120;
+    };
 
+    window.speechSynthesis.speak(utterance);
 
-        setTimeout(
-          () => {
-
-            if (
-              session ===
-              speechSessionId
-            ) {
-              speakNext();
-            }
-
-          },
-          pause
-        );
-      };
-
-
-    utterance.onerror =
-      event => {
-
-        if (
-          session !== speechSessionId
-        ) {
-          return;
-        }
-
-        console.warn(
-          "Speech synthesis error:",
-          event.error
-        );
-
-        isSpeakingAnswer =
-          false;
-
-        clearSpeechHighlight();
-
-        setVoiceStatus(
-          ""
-        );
-      };
-
-
-    window.speechSynthesis.speak(
-      utterance
-    );
   }
 
-
   speakNext();
+
 }
 
 
@@ -2019,18 +1782,14 @@ function displayAnswer(text) {
 
   if (!answerBox) return;
 
-  const cleaned =
-    cleanAIAnswer(text);
+  const cleaned = cleanAIAnswer(text);
 
   answerBox.innerHTML = "";
 
   const answerHeader =
-    document.createElement(
-      "div"
-    );
+    document.createElement("div");
 
-  answerHeader.textContent =
-    "Rwanda AI:";
+  answerHeader.textContent = "Rwanda AI:";
 
   answerHeader.style.cssText =
     "font-weight:900;" +
@@ -2038,9 +1797,7 @@ function displayAnswer(text) {
     "margin-bottom:8px;";
 
   const answerContent =
-    document.createElement(
-      "div"
-    );
+    document.createElement("div");
 
   answerContent.className =
     "rwanda-ai-answer-text";
@@ -2051,32 +1808,19 @@ function displayAnswer(text) {
     "line-height:1.65;" +
     "word-wrap:break-word;";
 
-
-  /*
-  Render answer in synchronized speech
-  segments so the visible text can follow
-  the voice.
-  */
-
   renderSpeechSynchronizedAnswer(
     answerContent,
     cleaned
   );
 
+  answerBox.appendChild(answerHeader);
+
+  answerBox.appendChild(answerContent);
 
   answerBox.appendChild(
-    answerHeader
+    createCopyButton(cleaned)
   );
 
-  answerBox.appendChild(
-    answerContent
-  );
-
-  answerBox.appendChild(
-    createCopyButton(
-      cleaned
-    )
-  );
 }
 
 
@@ -2090,13 +1834,13 @@ function displayUserMessage(text) {
 
   if (!answerBox) return;
 
-  const safe =
-    escapeHTML(text);
+  const safe = escapeHTML(text);
 
   answerBox.innerHTML =
     "<strong>You:</strong><br>" +
     safe.replace(/\n/g, "<br>") +
     "<br><br>";
+
 }
 
 
@@ -2113,6 +1857,7 @@ function displayLoading() {
   answerBox.innerHTML =
     "<strong>Rwanda AI:</strong><br>" +
     "Thinking...";
+
 }
 
 
@@ -2125,9 +1870,7 @@ IMAGE REQUEST DETECTION
 function shouldSearchImages(question) {
 
   const text =
-    String(question || "")
-      .toLowerCase()
-      .trim();
+    String(question || "").toLowerCase().trim();
 
   if (!text) return false;
 
@@ -2164,6 +1907,7 @@ function shouldSearchImages(question) {
   return patterns.some(
     pattern => pattern.test(text)
   );
+
 }
 
 
@@ -2175,9 +1919,7 @@ GOOGLE IMAGE QUERY
 
 function buildImageSearchQuery(question) {
 
-  let result =
-    String(question || "")
-      .trim();
+  let result = String(question || "").trim();
 
   const english = [
 
@@ -2204,18 +1946,16 @@ function buildImageSearchQuery(question) {
     "pics of",
     "show me",
     "show"
+
   ];
 
   english.forEach(phrase => {
 
-    result =
-      result.replace(
-        new RegExp(
-          escapeRegExp(phrase),
-          "gi"
-        ),
-        " "
-      );
+    result = result.replace(
+      new RegExp(escapeRegExp(phrase), "gi"),
+      " "
+    );
+
   });
 
   const kinyarwanda = [
@@ -2232,40 +1972,32 @@ function buildImageSearchQuery(question) {
     "amafoto",
     "ifoto ya",
     "ifoto"
+
   ];
 
   kinyarwanda.forEach(phrase => {
 
-    result =
-      result.replace(
-        new RegExp(
-          escapeRegExp(phrase),
-          "gi"
-        ),
-        " "
-      );
-  });
-
-  result =
-    result.replace(
-      /[?？!！]/g,
+    result = result.replace(
+      new RegExp(escapeRegExp(phrase), "gi"),
       " "
     );
 
-  result =
-    result
-      .replace(/\s+/g, " ")
-      .trim();
+  });
+
+  result = result.replace(/[?？!！]/g, " ");
+
+  result = result.replace(/\s+/g, " ").trim();
 
   if (!result) {
 
-    result =
-      String(question || "")
-        .replace(/[?？!！]/g, "")
-        .trim();
+    result = String(question || "")
+      .replace(/[?？!！]/g, "")
+      .trim();
+
   }
 
   return result;
+
 }
 
 
@@ -2278,19 +2010,14 @@ OPEN GOOGLE IMAGES
 function openGoogleImagesImmediately(question) {
 
   const imageQuery =
-    buildImageSearchQuery(
-      question
-    );
+    buildImageSearchQuery(question);
 
   const url =
     "https://www.google.com/search?tbm=isch&q=" +
     encodeURIComponent(imageQuery);
 
   const tab =
-    window.open(
-      url,
-      "_blank"
-    );
+    window.open(url, "_blank");
 
   if (tab) {
 
@@ -2303,6 +2030,7 @@ function openGoogleImagesImmediately(question) {
       query: imageQuery,
       url: url
     };
+
   }
 
   return {
@@ -2310,6 +2038,7 @@ function openGoogleImagesImmediately(question) {
     query: imageQuery,
     url: url
   };
+
 }
 
 
@@ -2352,6 +2081,7 @@ function displayImageLoading(query) {
     "</div>" +
 
     "</div>";
+
 }
 
 
@@ -2406,6 +2136,7 @@ function displayGoogleFallback(url, query) {
     "</a>" +
 
     "</div>";
+
 }
 
 
@@ -2418,12 +2149,7 @@ CONVERSATION CATEGORY DETECTION
 function detectConversationCategory(text) {
 
   const value =
-    String(text || "")
-      .toLowerCase();
-
-  /*
-  POLYNOMIAL
-  */
+    String(text || "").toLowerCase();
 
   if (
     /\bpolynomial\b/.test(value) ||
@@ -2439,11 +2165,6 @@ function detectConversationCategory(text) {
     return "Polynomial";
   }
 
-
-  /*
-  INTEGRAL
-  */
-
   if (
     /\bintegral\b/.test(value) ||
     /\bintegrals\b/.test(value) ||
@@ -2454,11 +2175,6 @@ function detectConversationCategory(text) {
   ) {
     return "Integral";
   }
-
-
-  /*
-  TRIGONOMETRY
-  */
 
   if (
     /\btrigonometry\b/.test(value) ||
@@ -2472,11 +2188,6 @@ function detectConversationCategory(text) {
   ) {
     return "Trigonometry";
   }
-
-
-  /*
-  GEOMETRY
-  */
 
   if (
     /\bgeometry\b/.test(value) ||
@@ -2493,11 +2204,6 @@ function detectConversationCategory(text) {
     return "Geometry";
   }
 
-
-  /*
-  REAL ROOTS / EQUATIONS
-  */
-
   if (
     /\breal roots?\b/.test(value) ||
     /\bfind all real roots?\b/.test(value) ||
@@ -2508,11 +2214,6 @@ function detectConversationCategory(text) {
   ) {
     return "Real Roots";
   }
-
-
-  /*
-  PHYSICS
-  */
 
   if (
     /\bphysics\b/.test(value) ||
@@ -2528,11 +2229,6 @@ function detectConversationCategory(text) {
     return "Physics";
   }
 
-
-  /*
-  CHEMISTRY
-  */
-
   if (
     /\bchemistry\b/.test(value) ||
     /\bchemical\b/.test(value) ||
@@ -2546,11 +2242,6 @@ function detectConversationCategory(text) {
   ) {
     return "Chemistry";
   }
-
-
-  /*
-  ASTRONOMY
-  */
 
   if (
     /\bastronomy\b/.test(value) ||
@@ -2566,11 +2257,6 @@ function detectConversationCategory(text) {
     return "Astronomy";
   }
 
-
-  /*
-  BIOLOGY
-  */
-
   if (
     /\bbiology\b/.test(value) ||
     /\bcell\b/.test(value) ||
@@ -2582,11 +2268,6 @@ function detectConversationCategory(text) {
   ) {
     return "Biology";
   }
-
-
-  /*
-  MATHEMATICS GENERAL
-  */
 
   if (
     /\bmathematics\b/.test(value) ||
@@ -2601,11 +2282,6 @@ function detectConversationCategory(text) {
     return "Mathematics";
   }
 
-
-  /*
-  RWANDA / GEOGRAPHY
-  */
-
   if (
     /\brwanda\b/.test(value) ||
     /\bprovince\b/.test(value) ||
@@ -2618,12 +2294,8 @@ function detectConversationCategory(text) {
     return "Rwanda / Geography";
   }
 
-
-  /*
-  DEFAULT
-  */
-
   return "General";
+
 }
 
 
@@ -2636,15 +2308,11 @@ CONVERSATION CATEGORY BADGE
 function createCategoryBadge(category) {
 
   const badge =
-    document.createElement(
-      "span"
-    );
+    document.createElement("span");
 
-  badge.className =
-    "conversation-category";
+  badge.className = "conversation-category";
 
-  badge.textContent =
-    category;
+  badge.textContent = category;
 
   badge.style.cssText =
     "display:inline-block;" +
@@ -2658,6 +2326,7 @@ function createCategoryBadge(category) {
     "letter-spacing:.2px;";
 
   return badge;
+
 }
 
 
@@ -2667,65 +2336,63 @@ AUTH
 ==========================================================
 */
 
-onAuthStateChanged(
-  auth,
-  async user => {
+onAuthStateChanged(auth, async user => {
 
-    currentUser = user;
+  currentUser = user;
 
-    if (!user) {
+  if (!user) {
 
-      stopAnswerSpeech();
-
-      if (userEmailBox) {
-        userEmailBox.textContent =
-          "Not signed in";
-      }
-
-      setStatus(
-        "Please login to use Rwanda AI."
-      );
-
-      if (askBtn) {
-        askBtn.disabled = true;
-      }
-
-      if (newChatBtn) {
-        newChatBtn.disabled = true;
-      }
-
-      return;
-    }
+    stopAnswerSpeech();
 
     if (userEmailBox) {
-      userEmailBox.textContent =
-        user.email || "Signed in";
+      userEmailBox.textContent = "Not signed in";
     }
 
+    setStatus("Please login to use Rwanda AI.");
+
     if (askBtn) {
-      askBtn.disabled = false;
+      askBtn.disabled = true;
     }
 
     if (newChatBtn) {
-      newChatBtn.disabled = false;
+      newChatBtn.disabled = true;
     }
 
-    setStatus("");
+    return;
 
-    try {
-
-      await loadUserMemories();
-      await loadPastConversations();
-
-    } catch (error) {
-
-      console.error(
-        "Initial Firebase loading error:",
-        error
-      );
-    }
   }
-);
+
+  if (userEmailBox) {
+    userEmailBox.textContent =
+      user.email || "Signed in";
+  }
+
+  if (askBtn) {
+    askBtn.disabled = false;
+  }
+
+  if (newChatBtn) {
+    newChatBtn.disabled = false;
+  }
+
+  setStatus("");
+
+  try {
+
+    await loadUserMemories();
+
+    await loadPastConversations();
+
+  } catch (error) {
+
+    console.error(
+      "Initial Firebase loading error:",
+      error
+    );
+
+  }
+
+});
 
 
 /*
@@ -2736,53 +2403,51 @@ LOGOUT
 
 if (logoutBtn) {
 
-  logoutBtn.addEventListener(
-    "click",
-    async () => {
+  logoutBtn.addEventListener("click", async () => {
 
-      try {
+    try {
 
-        stopAnswerSpeech();
+      stopAnswerSpeech();
 
-        isVoiceQuestion =
-          false;
+      isVoiceQuestion = false;
 
-        await signOut(auth);
+      await signOut(auth);
 
-        currentUser = null;
-        currentConversationId = null;
-        currentConversationTitle =
-          "New Conversation";
+      currentUser = null;
 
-        conversationMessages = [];
-        userMemories = [];
+      currentConversationId = null;
 
-        if (questionInput) {
-          questionInput.value = "";
-        }
+      currentConversationTitle = "New Conversation";
 
-        if (answerBox) {
-          answerBox.innerHTML =
-            '<span class="answer-placeholder">' +
-            "Please login to use Rwanda AI." +
-            "</span>";
-        }
+      conversationMessages = [];
 
-        setStatus("");
+      userMemories = [];
 
-      } catch (error) {
-
-        console.error(
-          "Logout error:",
-          error
-        );
-
-        setStatus(
-          "Logout failed."
-        );
+      if (questionInput) {
+        questionInput.value = "";
       }
+
+      if (answerBox) {
+
+        answerBox.innerHTML =
+          '<span class="answer-placeholder">' +
+          "Please login to use Rwanda AI." +
+          "</span>";
+
+      }
+
+      setStatus("");
+
+    } catch (error) {
+
+      console.error("Logout error:", error);
+
+      setStatus("Logout failed.");
+
     }
-  );
+
+  });
+
 }
 
 
@@ -2794,48 +2459,45 @@ NEW CHAT
 
 if (newChatBtn) {
 
-  newChatBtn.addEventListener(
-    "click",
-    () => {
+  newChatBtn.addEventListener("click", () => {
 
-      stopAnswerSpeech();
+    stopAnswerSpeech();
 
-      isVoiceQuestion =
-        false;
+    isVoiceQuestion = false;
 
-      currentConversationId = null;
+    currentConversationId = null;
 
-      currentConversationTitle =
-        "New Conversation";
+    currentConversationTitle = "New Conversation";
 
-      conversationMessages = [];
+    conversationMessages = [];
 
-      if (questionInput) {
+    if (questionInput) {
 
-        questionInput.value = "";
-        questionInput.focus();
+      questionInput.value = "";
 
-      }
+      questionInput.focus();
 
-      if (answerBox) {
-
-        answerBox.innerHTML =
-          '<span class="answer-placeholder">' +
-          "Rwanda AI is ready. Ask your question." +
-          "</span>";
-
-      }
-
-      setStatus("");
-
-      if (pastConversationsPanel) {
-
-        pastConversationsPanel.classList.remove(
-          "open"
-        );
-      }
     }
-  );
+
+    if (answerBox) {
+
+      answerBox.innerHTML =
+        '<span class="answer-placeholder">' +
+        "Rwanda AI is ready. Ask your question." +
+        "</span>";
+
+    }
+
+    setStatus("");
+
+    if (pastConversationsPanel) {
+
+      pastConversationsPanel.classList.remove("open");
+
+    }
+
+  });
+
 }
 
 
@@ -2847,44 +2509,35 @@ PAST CONVERSATIONS BUTTON
 
 if (pastConversationsBtn) {
 
-  pastConversationsBtn.addEventListener(
-    "click",
-    async () => {
+  pastConversationsBtn.addEventListener("click", async () => {
 
-      if (!currentUser) {
+    if (!currentUser) {
 
-        setStatus(
-          "Please login first."
-        );
+      setStatus("Please login first.");
 
-        return;
-      }
+      return;
 
-      if (!pastConversationsPanel) {
-        return;
-      }
-
-      const opening =
-        !pastConversationsPanel.classList.contains(
-          "open"
-        );
-
-      if (opening) {
-
-        pastConversationsPanel.classList.add(
-          "open"
-        );
-
-        await loadPastConversations();
-
-      } else {
-
-        pastConversationsPanel.classList.remove(
-          "open"
-        );
-      }
     }
-  );
+
+    if (!pastConversationsPanel) return;
+
+    const opening =
+      !pastConversationsPanel.classList.contains("open");
+
+    if (opening) {
+
+      pastConversationsPanel.classList.add("open");
+
+      await loadPastConversations();
+
+    } else {
+
+      pastConversationsPanel.classList.remove("open");
+
+    }
+
+  });
+
 }
 
 
@@ -2896,10 +2549,8 @@ SEND BUTTON
 
 if (askBtn) {
 
-  askBtn.addEventListener(
-    "click",
-    sendMessage
-  );
+  askBtn.addEventListener("click", sendMessage);
+
 }
 
 
@@ -2911,21 +2562,21 @@ ENTER
 
 if (questionInput) {
 
-  questionInput.addEventListener(
-    "keydown",
-    event => {
+  questionInput.addEventListener("keydown", event => {
 
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey
-      ) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
 
-        event.preventDefault();
+      event.preventDefault();
 
-        sendMessage();
-      }
+      sendMessage();
+
     }
-  );
+
+  });
+
 }
 
 
@@ -2941,11 +2592,10 @@ async function sendMessage() {
 
   if (!currentUser) {
 
-    setStatus(
-      "Please login first."
-    );
+    setStatus("Please login first.");
 
     return;
+
   }
 
   const question =
@@ -2955,26 +2605,24 @@ async function sendMessage() {
 
   if (!question) {
 
-    setStatus(
-      "Please enter a question."
-    );
+    setStatus("Please enter a question.");
 
     if (questionInput) {
       questionInput.focus();
     }
 
     return;
+
   }
 
-
   /*
-  Preserve whether this request came from
-  Voice AI before the request starts.
+  Only Voice AI requests are allowed to
+  automatically read the answer.
+
+  Voice Output must also be ON.
   */
 
-  const voiceRequest =
-    isVoiceQuestion;
-
+  const voiceRequest = isVoiceQuestion;
 
   isSending = true;
 
@@ -2993,39 +2641,21 @@ async function sendMessage() {
   ========================================================
   */
 
-  if (
-    shouldSearchImages(question)
-  ) {
+  if (shouldSearchImages(question)) {
 
-    /*
-    Image requests should never accidentally
-    trigger a voice answer.
-    */
-
-    isVoiceQuestion =
-      false;
+    isVoiceQuestion = false;
 
     stopAnswerSpeech();
 
     const imageQuery =
-      buildImageSearchQuery(
-        question
-      );
+      buildImageSearchQuery(question);
 
-    displayImageLoading(
-      imageQuery
-    );
+    displayImageLoading(imageQuery);
 
-    scrollToAnswer();
-
-    setStatus(
-      "Opening Google Images..."
-    );
+    setStatus("Opening Google Images...");
 
     const googleResult =
-      openGoogleImagesImmediately(
-        question
-      );
+      openGoogleImagesImmediately(question);
 
     if (questionInput) {
       questionInput.value = "";
@@ -3072,6 +2702,7 @@ async function sendMessage() {
           "</div>" +
 
           "</div>";
+
       }
 
       setStatus(
@@ -3088,6 +2719,7 @@ async function sendMessage() {
       setStatus(
         "Google Images was blocked by the browser. Tap Open Google Images."
       );
+
     }
 
     isSending = false;
@@ -3099,10 +2731,13 @@ async function sendMessage() {
     if (questionInput) {
 
       questionInput.disabled = false;
+
       questionInput.focus();
+
     }
 
     return;
+
   }
 
 
@@ -3112,18 +2747,19 @@ async function sendMessage() {
   ========================================================
   */
 
-  setStatus(
-    "Rwanda AI is thinking..."
-  );
+  setStatus("Rwanda AI is thinking...");
 
   conversationMessages.push({
+
     role: "user",
+
     content: question
+
   });
 
   displayUserMessage(question);
+
   displayLoading();
-  scrollToAnswer();
 
 
   try {
@@ -3131,16 +2767,14 @@ async function sendMessage() {
     if (!currentConversationId) {
 
       currentConversationTitle =
-        makeConversationTitle(
-          question
-        );
+        makeConversationTitle(question);
 
       currentConversationId =
         await createConversation(
           currentConversationTitle
         );
-    }
 
+    }
 
     await saveMessage(
       currentConversationId,
@@ -3156,35 +2790,55 @@ async function sendMessage() {
 
         question: question,
 
-        userId:
-          currentUser.uid,
+        userId: currentUser.uid,
 
-        conversationId:
-          currentConversationId,
+        conversationId: currentConversationId,
 
-        conversationTitle:
-          currentConversationTitle,
+        conversationTitle: currentConversationTitle,
 
-        conversationMessages:
-          conversationMessages,
+        conversationMessages: conversationMessages,
 
-        memories:
-          userMemories,
+        memories: userMemories,
 
         systemInstruction:
+
           "You are Rwanda AI. " +
+
           "Answer normally and clearly. " +
+
           "For mathematics, physics, chemistry and astronomy calculations, " +
-          "DO NOT use LaTeX. " +
-          "DO NOT use \\frac, \\sqrt, \\boxed, \\left, \\right, \\qquad or other LaTeX commands. " +
-          "DO NOT use caret notation such as x^2. " +
+
+          "give direct calculation answers only. " +
+
+          "Do not include theoretical explanations, " +
+          "long introductions, unnecessary definitions, " +
+          "or unrelated educational discussions. " +
+
+          "For calculations, show only the necessary mathematical steps " +
+          "and the final answer. " +
+
+          "Keep solutions short, accurate and easy to read. " +
+
+          "Do not use LaTeX. " +
+
+          "Do not use \\frac, \\sqrt, \\boxed, \\left, \\right, \\qquad " +
+          "or other LaTeX commands. " +
+
+          "Do not use caret notation such as x^2. " +
+
           "Use Unicode powers such as x², x³ and x⁴. " +
+
           "Write fractions normally such as (a)/(b). " +
+
           "Write square roots as √(x). " +
+
           "Keep calculations easy to read and copy on a phone. " +
-          "Do not output raw LaTeX. " +
-          "For difficult calculations, explain the solution step by step " +
-          "as if teaching a student."
+
+          "Never output raw LaTeX. " +
+
+          "When a calculation requires multiple operations, " +
+          "show the essential steps without theoretical explanations."
+
       });
 
 
@@ -3193,20 +2847,18 @@ async function sendMessage() {
       throw new Error(
         "Empty response from Rwanda AI backend."
       );
+
     }
 
-
-    if (
-      response.success === false
-    ) {
+    if (response.success === false) {
 
       throw new Error(
         response.error ||
         response.message ||
         "Rwanda AI backend returned an error."
       );
-    }
 
+    }
 
     const aiAnswer =
       response.answer ||
@@ -3215,59 +2867,56 @@ async function sendMessage() {
       response.response ||
       "Rwanda AI did not return an answer.";
 
-
     const cleanedAnswer =
-      cleanAIAnswer(
-        aiAnswer
-      );
+      cleanAIAnswer(aiAnswer);
 
 
     /*
-    Determine whether this answer should
-    automatically be spoken.
+    ======================================================
+    VOICE RULE
+    ======================================================
 
-    Voice question = always read.
+    Typed question:
+    NO automatic speech.
 
-    Calculation = also read automatically.
+    Voice question:
+    AUTOMATIC speech only if Voice Output is ON.
+
+    Calculations:
+    NO automatic speech unless asked by Voice AI.
+
+    ======================================================
     */
-
-    const calculationAnswer =
-      isCalculationContent(
-        question,
-        cleanedAnswer
-      );
-
 
     const shouldAutoRead =
-      voiceRequest ||
-      calculationAnswer;
+      voiceRequest === true &&
+      voiceOutputEnabled;
 
 
     /*
-    The flag is consumed now so a later typed
-    question cannot inherit it accidentally.
+    Consume the voice flag.
     */
 
-    isVoiceQuestion =
-      false;
+    isVoiceQuestion = false;
 
 
     conversationMessages.push({
+
       role: "assistant",
+
       content: cleanedAnswer
+
     });
 
 
-    displayAnswer(
-      cleanedAnswer
-    );
-
-    scrollToAnswer();
+    displayAnswer(cleanedAnswer);
 
 
     /*
     ======================================================
     AUTOMATIC VOICE
+    VOICE QUESTIONS ONLY
+    VOICE OUTPUT MUST BE ON
     ======================================================
     */
 
@@ -3275,27 +2924,27 @@ async function sendMessage() {
 
       setTimeout(() => {
 
-        /*
-        If another request has already started,
-        do not start old speech.
-        */
-
-        if (!isSending) {
+        if (
+          !isSending ||
+          !voiceOutputEnabled
+        ) {
           return;
         }
 
         speakAnswerAsTeacher(
           cleanedAnswer,
           {
-            question:
-              question,
+            question: question,
 
-            calculation:
-              calculationAnswer
+            calculation: isCalculationContent(
+              question,
+              cleanedAnswer
+            )
           }
         );
 
       }, 350);
+
     }
 
 
@@ -3309,14 +2958,13 @@ async function sendMessage() {
     await updateConversation(
       currentConversationId,
       {
-        title:
-          currentConversationTitle,
 
-        updatedAt:
-          serverTimestamp(),
+        title: currentConversationTitle,
 
-        messageCount:
-          conversationMessages.length
+        updatedAt: serverTimestamp(),
+
+        messageCount: conversationMessages.length
+
       }
     );
 
@@ -3327,11 +2975,9 @@ async function sendMessage() {
 
 
     setStatus(
-      calculationAnswer
-        ? "Rwanda AI answered and is explaining the calculation."
-        : shouldAutoRead
-          ? "Rwanda AI answered and is reading the answer."
-          : "Rwanda AI answered."
+      shouldAutoRead && voiceOutputEnabled
+        ? "Rwanda AI answered and is reading the answer."
+        : "Rwanda AI answered."
     );
 
 
@@ -3348,6 +2994,7 @@ async function sendMessage() {
         "Memory extraction skipped:",
         memoryError
       );
+
     }
 
 
@@ -3361,21 +3008,17 @@ async function sendMessage() {
         "Conversation refresh failed:",
         conversationError
       );
+
     }
+
 
   } catch (error) {
 
-    console.error(
-      "Rwanda AI error:",
-      error
-    );
+    console.error("Rwanda AI error:", error);
 
-
-    isVoiceQuestion =
-      false;
+    isVoiceQuestion = false;
 
     stopAnswerSpeech();
-
 
     if (
       conversationMessages.length > 0 &&
@@ -3385,28 +3028,24 @@ async function sendMessage() {
     ) {
 
       conversationMessages.pop();
-    }
 
+    }
 
     if (answerBox) {
 
       answerBox.innerHTML =
         "<strong>Rwanda AI:</strong><br>" +
-        escapeHTML(
-          getFriendlyError(error)
-        );
+        escapeHTML(getFriendlyError(error));
+
     }
 
-    setStatus(
-      "Rwanda AI could not answer."
-    );
+    setStatus("Rwanda AI could not answer.");
 
   } finally {
 
     isSending = false;
 
-    isVoiceQuestion =
-      false;
+    isVoiceQuestion = false;
 
     if (askBtn) {
       askBtn.disabled = false;
@@ -3415,9 +3054,13 @@ async function sendMessage() {
     if (questionInput) {
 
       questionInput.disabled = false;
+
       questionInput.focus();
+
     }
+
   }
+
 }
 
 
@@ -3433,22 +3076,23 @@ async function callRwandaAI(payload) {
     await fetch(
       BACKEND_URL,
       {
+
         method: "POST",
 
         headers: {
+
           "Content-Type":
             "text/plain;charset=utf-8"
+
         },
 
-        body:
-          JSON.stringify(payload)
+        body: JSON.stringify(payload)
+
       }
     );
 
-
   const rawText =
     await response.text();
-
 
   if (!response.ok) {
 
@@ -3458,15 +3102,14 @@ async function callRwandaAI(payload) {
       ": " +
       rawText
     );
-  }
 
+  }
 
   let data;
 
   try {
 
-    data =
-      JSON.parse(rawText);
+    data = JSON.parse(rawText);
 
   } catch (error) {
 
@@ -3478,9 +3121,11 @@ async function callRwandaAI(payload) {
     throw new Error(
       "Backend returned invalid JSON."
     );
+
   }
 
   return data;
+
 }
 
 
@@ -3492,9 +3137,7 @@ CONVERSATION TITLE
 
 function makeConversationTitle(question) {
 
-  let title =
-    String(question || "")
-      .trim();
+  let title = String(question || "").trim();
 
   if (!title) {
     return "New Conversation";
@@ -3505,9 +3148,11 @@ function makeConversationTitle(question) {
     title =
       title.substring(0, 55).trim() +
       "...";
+
   }
 
   return title;
+
 }
 
 
@@ -3521,37 +3166,30 @@ async function createConversation(title) {
 
   if (!currentUser) {
 
-    throw new Error(
-      "User is not signed in."
-    );
+    throw new Error("User is not signed in.");
+
   }
 
   const ref =
     await addDoc(
-      collection(
-        db,
-        "conversations"
-      ),
+      collection(db, "conversations"),
       {
-        userId:
-          currentUser.uid,
 
-        title:
-          title ||
-          "New Conversation",
+        userId: currentUser.uid,
 
-        createdAt:
-          serverTimestamp(),
+        title: title || "New Conversation",
 
-        updatedAt:
-          serverTimestamp(),
+        createdAt: serverTimestamp(),
 
-        messageCount:
-          0
+        updatedAt: serverTimestamp(),
+
+        messageCount: 0
+
       }
     );
 
   return ref.id;
+
 }
 
 
@@ -3569,16 +3207,14 @@ async function saveMessage(
 
   if (!currentUser) {
 
-    throw new Error(
-      "User is not signed in."
-    );
+    throw new Error("User is not signed in.");
+
   }
 
   if (!conversationId) {
 
-    throw new Error(
-      "Missing conversation ID."
-    );
+    throw new Error("Missing conversation ID.");
+
   }
 
   await addDoc(
@@ -3589,19 +3225,18 @@ async function saveMessage(
       "messages"
     ),
     {
-      userId:
-        currentUser.uid,
 
-      role:
-        role,
+      userId: currentUser.uid,
 
-      content:
-        String(content || ""),
+      role: role,
 
-      createdAt:
-        serverTimestamp()
+      content: String(content || ""),
+
+      createdAt: serverTimestamp()
+
     }
   );
+
 }
 
 
@@ -3619,13 +3254,10 @@ async function updateConversation(
   if (!conversationId) return;
 
   await updateDoc(
-    doc(
-      db,
-      "conversations",
-      conversationId
-    ),
+    doc(db, "conversations", conversationId),
     data
   );
+
 }
 
 
@@ -3650,46 +3282,19 @@ async function loadPastConversations() {
 
     const q =
       query(
-        collection(
-          db,
-          "conversations"
-        ),
-        where(
-          "userId",
-          "==",
-          currentUser.uid
-        )
+        collection(db, "conversations"),
+        where("userId", "==", currentUser.uid)
       );
 
-
-    const snapshot =
-      await getDocs(q);
-
+    const snapshot = await getDocs(q);
 
     const conversations = [];
 
+    for (const item of snapshot.docs) {
 
-    /*
-    ------------------------------------------------------
-    Read conversations
-    ------------------------------------------------------
-    */
+      const data = item.data() || {};
 
-    for (
-      const item of snapshot.docs
-    ) {
-
-      const data =
-        item.data() || {};
-
-      let category =
-        data.category ||
-        "";
-
-      /*
-      If old conversation has no category,
-      inspect its messages.
-      */
+      let category = data.category || "";
 
       if (!category) {
 
@@ -3706,28 +3311,21 @@ async function loadPastConversations() {
             );
 
           let combinedText =
-            String(
-              data.title || ""
-            );
+            String(data.title || "");
 
-          messageSnapshot.forEach(
-            messageItem => {
+          messageSnapshot.forEach(messageItem => {
 
-              const messageData =
-                messageItem.data() || {};
+            const messageData =
+              messageItem.data() || {};
 
-              combinedText +=
-                " " +
-                String(
-                  messageData.content || ""
-                );
-            }
-          );
+            combinedText +=
+              " " +
+              String(messageData.content || "");
+
+          });
 
           category =
-            detectConversationCategory(
-              combinedText
-            );
+            detectConversationCategory(combinedText);
 
         } catch (messageError) {
 
@@ -3737,57 +3335,43 @@ async function loadPastConversations() {
           );
 
           category =
-            detectConversationCategory(
-              data.title || ""
-            );
-        }
-      }
+            detectConversationCategory(data.title || "");
 
+        }
+
+      }
 
       conversations.push({
 
-        id:
-          item.id,
+        id: item.id,
 
-        title:
-          data.title ||
-          "Untitled Conversation",
+        title: data.title || "Untitled Conversation",
 
-        category:
-          category ||
-          "General",
+        category: category || "General",
 
-        createdAt:
-          data.createdAt ||
-          null,
+        createdAt: data.createdAt || null,
 
-        updatedAt:
-          data.updatedAt ||
-          null,
+        updatedAt: data.updatedAt || null,
 
-        messageCount:
-          data.messageCount ||
-          0
+        messageCount: data.messageCount || 0
+
       });
+
     }
 
+    conversations.sort((a, b) =>
 
-    conversations.sort(
-      (a, b) =>
-        getTimestampMillis(
-          b.updatedAt ||
-          b.createdAt
-        ) -
-        getTimestampMillis(
-          a.updatedAt ||
-          a.createdAt
-        )
+      getTimestampMillis(
+        b.updatedAt || b.createdAt
+      ) -
+
+      getTimestampMillis(
+        a.updatedAt || a.createdAt
+      )
+
     );
 
-
-    if (
-      conversations.length === 0
-    ) {
+    if (conversations.length === 0) {
 
       pastConversationsList.innerHTML =
         '<div class="empty-conversations">' +
@@ -3795,95 +3379,62 @@ async function loadPastConversations() {
         "</div>";
 
       return;
+
     }
 
+    pastConversationsList.innerHTML = "";
 
-    pastConversationsList.innerHTML =
-      "";
+    conversations.forEach(conversation => {
 
+      const button =
+        document.createElement("button");
 
-    conversations.forEach(
-      conversation => {
+      button.type = "button";
 
-        const button =
-          document.createElement(
-            "button"
-          );
+      button.className = "conversation-item";
 
-        button.type =
-          "button";
+      button.style.cssText =
+        "display:block;" +
+        "width:100%;" +
+        "text-align:left;" +
+        "cursor:pointer;";
 
-        button.className =
-          "conversation-item";
+      const title =
+        document.createElement("div");
 
+      title.className = "conversation-title";
 
-        button.style.cssText =
-          "display:block;" +
-          "width:100%;" +
-          "text-align:left;" +
-          "cursor:pointer;";
+      title.textContent = conversation.title;
 
+      const category =
+        createCategoryBadge(conversation.category);
 
-        const title =
-          document.createElement(
-            "div"
-          );
+      const date =
+        document.createElement("div");
 
-        title.className =
-          "conversation-title";
+      date.className = "conversation-date";
 
-        title.textContent =
-          conversation.title;
-
-
-        const category =
-          createCategoryBadge(
-            conversation.category
-          );
-
-
-        const date =
-          document.createElement(
-            "div"
-          );
-
-        date.className =
-          "conversation-date";
-
-        date.textContent =
-          formatDate(
-            conversation.updatedAt ||
-            conversation.createdAt
-          );
-
-
-        button.appendChild(
-          title
+      date.textContent =
+        formatDate(
+          conversation.updatedAt ||
+          conversation.createdAt
         );
 
-        button.appendChild(
-          category
-        );
+      button.appendChild(title);
 
-        button.appendChild(
-          date
-        );
+      button.appendChild(category);
 
+      button.appendChild(date);
 
-        button.addEventListener(
-          "click",
-          () =>
-            openConversation(
-              conversation.id
-            )
-        );
+      button.addEventListener("click", () => {
 
+        openConversation(conversation.id);
 
-        pastConversationsList.appendChild(
-          button
-        );
-      }
-    );
+      });
+
+      pastConversationsList.appendChild(button);
+
+    });
 
   } catch (error) {
 
@@ -3896,7 +3447,9 @@ async function loadPastConversations() {
       '<div class="empty-conversations">' +
       "Could not load conversations." +
       "</div>";
+
   }
+
 }
 
 
@@ -3906,57 +3459,38 @@ OPEN CONVERSATION
 ==========================================================
 */
 
-async function openConversation(
-  conversationId
-) {
+async function openConversation(conversationId) {
 
-  if (!currentUser || !conversationId) {
-    return;
-  }
+  if (!currentUser || !conversationId) return;
 
   try {
 
     stopAnswerSpeech();
 
-    isVoiceQuestion =
-      false;
+    isVoiceQuestion = false;
 
-    setStatus(
-      "Loading conversation..."
-    );
-
+    setStatus("Loading conversation...");
 
     const conversationSnapshot =
       await getDoc(
-        doc(
-          db,
-          "conversations",
-          conversationId
-        )
+        doc(db, "conversations", conversationId)
       );
 
-
-    if (
-      !conversationSnapshot.exists()
-    ) {
+    if (!conversationSnapshot.exists()) {
 
       throw new Error(
         "Conversation no longer exists."
       );
-    }
 
+    }
 
     const conversationData =
       conversationSnapshot.data();
 
-
-    currentConversationId =
-      conversationId;
+    currentConversationId = conversationId;
 
     currentConversationTitle =
-      conversationData.title ||
-      "Conversation";
-
+      conversationData.title || "Conversation";
 
     const messagesSnapshot =
       await getDocs(
@@ -3968,103 +3502,73 @@ async function openConversation(
         )
       );
 
-
     const loadedMessages = [];
-
 
     messagesSnapshot.forEach(item => {
 
-      const data =
-        item.data() || {};
+      const data = item.data() || {};
 
       loadedMessages.push({
 
-        id:
-          item.id,
+        id: item.id,
 
-        role:
-          data.role ||
-          "assistant",
+        role: data.role || "assistant",
 
-        content:
-          data.content ||
-          "",
+        content: data.content || "",
 
-        createdAt:
-          data.createdAt ||
-          null
+        createdAt: data.createdAt || null
+
       });
+
     });
 
+    loadedMessages.sort((a, b) =>
 
-    loadedMessages.sort(
-      (a, b) =>
-        getTimestampMillis(
-          a.createdAt
-        ) -
-        getTimestampMillis(
-          b.createdAt
-        )
+      getTimestampMillis(a.createdAt) -
+      getTimestampMillis(b.createdAt)
+
     );
 
-
     conversationMessages =
-      loadedMessages.map(
-        message => ({
-          role:
-            message.role,
+      loadedMessages.map(message => ({
 
-          content:
-            message.content
-        })
-      );
+        role: message.role,
 
+        content: message.content
+
+      }));
 
     showConversationModal(
       currentConversationTitle,
       loadedMessages
     );
 
-
     const latestAssistant =
       [...loadedMessages]
         .reverse()
-        .find(
-          message =>
-            message.role ===
-            "assistant"
-        );
-
+        .find(message => message.role === "assistant");
 
     if (latestAssistant) {
 
-      displayAnswer(
-        latestAssistant.content
-      );
+      displayAnswer(latestAssistant.content);
 
-    } else if (
-      loadedMessages.length
-    ) {
+    } else if (loadedMessages.length) {
 
       displayUserMessage(
         loadedMessages[
           loadedMessages.length - 1
         ].content
       );
-    }
 
+    }
 
     if (pastConversationsPanel) {
 
-      pastConversationsPanel.classList.remove(
-        "open"
-      );
+      pastConversationsPanel.classList.remove("open");
+
     }
 
-
-    setStatus(
-      "Conversation loaded."
-    );
+    setStatus("Conversation loaded.");
 
   } catch (error) {
 
@@ -4073,10 +3577,10 @@ async function openConversation(
       error
     );
 
-    setStatus(
-      "Could not open conversation."
-    );
+    setStatus("Could not open conversation.");
+
   }
+
 }
 
 
@@ -4086,10 +3590,7 @@ CONVERSATION MODAL
 ==========================================================
 */
 
-function showConversationModal(
-  title,
-  messages
-) {
+function showConversationModal(title, messages) {
 
   if (
     !conversationModal ||
@@ -4098,87 +3599,46 @@ function showConversationModal(
     return;
   }
 
+  conversationModalContent.innerHTML = "";
 
-  conversationModalContent.innerHTML =
-    "";
+  let combinedText = String(title || "");
 
+  messages.forEach(message => {
 
-  /*
-  --------------------------------------------------------
-  Conversation category
-  --------------------------------------------------------
-  */
+    combinedText +=
+      " " +
+      String(message.content || "");
 
-  let combinedText =
-    String(title || "");
-
-  messages.forEach(
-    message => {
-
-      combinedText +=
-        " " +
-        String(
-          message.content || ""
-        );
-    }
-  );
-
+  });
 
   const category =
-    detectConversationCategory(
-      combinedText
-    );
-
+    detectConversationCategory(combinedText);
 
   const categoryBadge =
-    createCategoryBadge(
-      category
-    );
+    createCategoryBadge(category);
 
+  categoryBadge.style.marginBottom = "14px";
 
-  categoryBadge.style.marginBottom =
-    "14px";
-
-
-  conversationModalContent.appendChild(
-    categoryBadge
-  );
-
-
-  /*
-  --------------------------------------------------------
-  Messages
-  --------------------------------------------------------
-  */
+  conversationModalContent.appendChild(categoryBadge);
 
   messages.forEach(message => {
 
     const block =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
-    block.className =
-      "message-block";
-
+    block.className = "message-block";
 
     const role =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
-    role.className =
-      "message-role";
+    role.className = "message-role";
 
     role.textContent =
       message.role === "user"
         ? "You"
         : "Rwanda AI";
 
-
-    if (
-      message.role === "assistant"
-    ) {
+    if (message.role === "assistant") {
 
       role.style.cssText =
         "font-weight:900;" +
@@ -4186,19 +3646,12 @@ function showConversationModal(
 
     }
 
-
     const content =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
-    content.className =
-      "message-content";
+    content.className = "message-content";
 
-
-    if (
-      message.role === "assistant"
-    ) {
+    if (message.role === "assistant") {
 
       content.style.cssText =
         "font-weight:700;" +
@@ -4208,80 +3661,49 @@ function showConversationModal(
 
     }
 
-
     const cleaned =
-      cleanAIAnswer(
-        message.content
-      );
-
+      cleanAIAnswer(message.content);
 
     content.innerHTML =
-      escapeHTML(
-        cleaned
-      )
-      .replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong>$1</strong>"
-      )
-      .replace(
-        /\n/g,
-        "<br>"
-      );
+      escapeHTML(cleaned)
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>");
 
+    block.appendChild(role);
 
-    block.appendChild(
-      role
-    );
+    block.appendChild(content);
 
-    block.appendChild(
-      content
-    );
-
-
-    /*
-    Copy button only for AI answers
-    */
-
-    if (
-      message.role ===
-      "assistant"
-    ) {
+    if (message.role === "assistant") {
 
       block.appendChild(
-        createCopyButton(
-          cleaned
-        )
+        createCopyButton(cleaned)
       );
+
     }
 
+    conversationModalContent.appendChild(block);
 
-    conversationModalContent.appendChild(
-      block
-    );
   });
-
 
   const modalTitle =
     conversationModal.querySelector(
       ".modal-header h3"
     );
 
-
   if (modalTitle) {
 
     modalTitle.textContent =
       title || "Conversation";
+
   }
 
-
-  conversationModal.classList.add(
-    "open"
-  );
+  conversationModal.classList.add("open");
 
   conversationModal.setAttribute(
     "aria-hidden",
     "false"
   );
+
 }
 
 
@@ -4297,38 +3719,32 @@ if (closeConversationModal) {
     "click",
     closeModal
   );
-}
 
+}
 
 if (conversationModal) {
 
-  conversationModal.addEventListener(
-    "click",
-    event => {
+  conversationModal.addEventListener("click", event => {
 
-      if (
-        event.target ===
-        conversationModal
-      ) {
-        closeModal();
-      }
+    if (event.target === conversationModal) {
+      closeModal();
     }
-  );
-}
 
+  });
+
+}
 
 function closeModal() {
 
   if (!conversationModal) return;
 
-  conversationModal.classList.remove(
-    "open"
-  );
+  conversationModal.classList.remove("open");
 
   conversationModal.setAttribute(
     "aria-hidden",
     "true"
   );
+
 }
 
 
@@ -4346,29 +3762,17 @@ async function loadUserMemories() {
 
     const q =
       query(
-        collection(
-          db,
-          "memories"
-        ),
-        where(
-          "userId",
-          "==",
-          currentUser.uid
-        )
+        collection(db, "memories"),
+        where("userId", "==", currentUser.uid)
       );
 
-
-    const snapshot =
-      await getDocs(q);
-
+    const snapshot = await getDocs(q);
 
     userMemories = [];
 
-
     snapshot.forEach(item => {
 
-      const data =
-        item.data() || {};
+      const data = item.data() || {};
 
       const memory =
         data.memory ||
@@ -4376,28 +3780,24 @@ async function loadUserMemories() {
         data.content ||
         data.fact;
 
-
       if (memory) {
 
-        userMemories.push(
-          String(memory)
-        );
+        userMemories.push(String(memory));
+
       }
+
     });
 
-
-    userMemories =
-      userMemories.slice(0, 50);
+    userMemories = userMemories.slice(0, 50);
 
   } catch (error) {
 
-    console.error(
-      "Load memories error:",
-      error
-    );
+    console.error("Load memories error:", error);
 
     userMemories = [];
+
   }
+
 }
 
 
@@ -4407,65 +3807,41 @@ SAVE MEMORIES
 ==========================================================
 */
 
-async function extractAndSaveMemories(
-  question,
-  answer
-) {
+async function extractAndSaveMemories(question, answer) {
 
   if (!currentUser) return;
 
-  if (
-    conversationMessages.length < 2
-  ) {
-    return;
-  }
-
+  if (conversationMessages.length < 2) return;
 
   const response =
     await callRwandaAI({
 
-      action:
-        "memory",
+      action: "memory",
 
-      userId:
-        currentUser.uid,
+      userId: currentUser.uid,
 
-      question:
-        question,
+      question: question,
 
-      answer:
-        answer,
+      answer: answer,
 
-      memories:
-        userMemories
+      memories: userMemories
+
     });
 
-
-  if (
-    !response ||
-    response.success === false
-  ) {
+  if (!response || response.success === false) {
     return;
   }
-
 
   let memories =
     response.memories ||
     response.memory ||
     [];
 
-
-  if (
-    typeof memories === "string"
-  ) {
+  if (typeof memories === "string") {
     memories = [memories];
   }
 
-
-  if (!Array.isArray(memories)) {
-    return;
-  }
-
+  if (!Array.isArray(memories)) return;
 
   for (const memory of memories) {
 
@@ -4474,44 +3850,35 @@ async function extractAndSaveMemories(
 
     if (!cleanMemory) continue;
 
-
     const duplicate =
-      userMemories.some(
-        existing =>
-          existing.toLowerCase() ===
-          cleanMemory.toLowerCase()
-      );
+      userMemories.some(existing =>
 
+        existing.toLowerCase() ===
+        cleanMemory.toLowerCase()
+
+      );
 
     if (duplicate) continue;
 
-
     await addDoc(
-      collection(
-        db,
-        "memories"
-      ),
+      collection(db, "memories"),
       {
-        userId:
-          currentUser.uid,
 
-        memory:
-          cleanMemory,
+        userId: currentUser.uid,
 
-        createdAt:
-          serverTimestamp()
+        memory: cleanMemory,
+
+        createdAt: serverTimestamp()
+
       }
     );
 
+    userMemories.push(cleanMemory);
 
-    userMemories.push(
-      cleanMemory
-    );
   }
 
+  userMemories = userMemories.slice(0, 50);
 
-  userMemories =
-    userMemories.slice(0, 50);
 }
 
 
@@ -4523,56 +3890,46 @@ STICKERS
 
 if (stickerBtn) {
 
-  stickerBtn.addEventListener(
-    "click",
-    async () => {
+  stickerBtn.addEventListener("click", async () => {
 
-      if (!stickerPicker) return;
+    if (!stickerPicker) return;
 
+    const opening =
+      !stickerPicker.classList.contains("open");
 
-      const opening =
-        !stickerPicker.classList.contains(
-          "open"
+    if (opening) {
+
+      try {
+
+        const response =
+          await callRwandaAI({
+            action: "stickers"
+          });
+
+        if (
+          response &&
+          Array.isArray(response.stickers)
+        ) {
+
+          renderStickers(response.stickers);
+
+        }
+
+      } catch (error) {
+
+        console.warn(
+          "Sticker backend unavailable:",
+          error
         );
 
-
-      if (opening) {
-
-        try {
-
-          const response =
-            await callRwandaAI({
-              action: "stickers"
-            });
-
-
-          if (
-            response &&
-            Array.isArray(
-              response.stickers
-            )
-          ) {
-
-            renderStickers(
-              response.stickers
-            );
-          }
-
-        } catch (error) {
-
-          console.warn(
-            "Sticker backend unavailable:",
-            error
-          );
-        }
       }
 
-
-      stickerPicker.classList.toggle(
-        "open"
-      );
     }
-  );
+
+    stickerPicker.classList.toggle("open");
+
+  });
+
 }
 
 
@@ -4587,23 +3944,18 @@ function initializeStickerButtons() {
   if (!stickerPicker) return;
 
   const buttons =
-    stickerPicker.querySelectorAll(
-      ".sticker"
-    );
-
+    stickerPicker.querySelectorAll(".sticker");
 
   buttons.forEach(button => {
 
-    button.addEventListener(
-      "click",
-      () => {
+    button.addEventListener("click", () => {
 
-        insertSticker(
-          button.textContent.trim()
-        );
-      }
-    );
+      insertSticker(button.textContent.trim());
+
+    });
+
   });
+
 }
 
 
@@ -4619,35 +3971,27 @@ function renderStickers(stickers) {
 
   stickerPicker.innerHTML = "";
 
-
   stickers.forEach(sticker => {
 
     const button =
-      document.createElement(
-        "button"
-      );
+      document.createElement("button");
 
-    button.type =
-      "button";
+    button.type = "button";
 
-    button.className =
-      "sticker";
+    button.className = "sticker";
 
-    button.textContent =
-      sticker;
+    button.textContent = sticker;
 
+    button.addEventListener("click", () => {
 
-    button.addEventListener(
-      "click",
-      () =>
-        insertSticker(sticker)
-    );
+      insertSticker(sticker);
 
+    });
 
-    stickerPicker.appendChild(
-      button
-    );
+    stickerPicker.appendChild(button);
+
   });
+
 }
 
 
@@ -4661,16 +4005,16 @@ function insertSticker(sticker) {
 
   if (!questionInput) return;
 
-  questionInput.value +=
-    sticker;
+  questionInput.value += sticker;
 
   questionInput.focus();
+
 }
 
 
 /*
 ==========================================================
-VOICE AI
+VOICE AI INPUT
 ==========================================================
 */
 
@@ -4678,11 +4022,9 @@ function initializeVoiceAI() {
 
   if (!voiceBtn) return;
 
-
   const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
-
 
   if (!SpeechRecognition) {
 
@@ -4693,190 +4035,143 @@ function initializeVoiceAI() {
     );
 
     return;
+
   }
 
+  recognition = new SpeechRecognition();
 
-  recognition =
-    new SpeechRecognition();
+  recognition.continuous = false;
 
+  recognition.interimResults = true;
 
-  recognition.continuous =
-    false;
-
-  recognition.interimResults =
-    true;
-
-  recognition.lang =
-    "en-US";
+  recognition.lang = "en-US";
 
 
-  recognition.onstart =
-    () => {
+  recognition.onstart = () => {
 
-      isListening = true;
+    isListening = true;
 
-      /*
-      Mark this question as a Voice AI question.
-      */
+    isVoiceQuestion = true;
 
-      isVoiceQuestion =
-        true;
+    voiceBtn.classList.add("voice-active");
 
-      voiceBtn.classList.add(
-        "voice-active"
-      );
+    voiceBtn.classList.add("listening");
 
-      voiceBtn.classList.add(
-        "listening"
-      );
+    voiceBtn.textContent = "🛑 Stop Voice";
 
-      voiceBtn.textContent =
-        "🛑 Stop Voice";
+    setVoiceStatus("Listening...");
 
-      setVoiceStatus(
-        "Listening..."
-      );
-    };
+  };
 
 
-  recognition.onresult =
-    event => {
+  recognition.onresult = event => {
 
-      let finalText = "";
-      let interimText = "";
+    let finalText = "";
 
+    let interimText = "";
 
-      for (
-        let i = event.resultIndex;
-        i < event.results.length;
-        i++
-      ) {
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ) {
 
-        const transcript =
-          event.results[i][0]
-            .transcript;
+      const transcript =
+        event.results[i][0].transcript;
 
+      if (event.results[i].isFinal) {
 
-        if (
-          event.results[i].isFinal
-        ) {
-
-          finalText +=
-            transcript;
-
-        } else {
-
-          interimText +=
-            transcript;
-        }
-      }
-
-
-      if (questionInput) {
-
-        questionInput.value =
-          (
-            finalText ||
-            interimText
-          ).trim();
-      }
-    };
-
-
-  recognition.onerror =
-    event => {
-
-      console.error(
-        "Voice error:",
-        event.error
-      );
-
-
-      /*
-      Do not let a failed Voice AI request
-      make the next typed question speak.
-      */
-
-      isVoiceQuestion =
-        false;
-
-
-      setVoiceStatus(
-        "Voice error: " +
-        event.error
-      );
-    };
-
-
-  recognition.onend =
-    () => {
-
-      isListening = false;
-
-      voiceBtn.classList.remove(
-        "voice-active"
-      );
-
-      voiceBtn.classList.remove(
-        "listening"
-      );
-
-      voiceBtn.textContent =
-        "🎤 Voice AI";
-
-
-      if (
-        questionInput &&
-        questionInput.value.trim()
-      ) {
-
-        setVoiceStatus(
-          "Voice input ready."
-        );
+        finalText += transcript;
 
       } else {
 
-        setVoiceStatus("");
-      }
-    };
+        interimText += transcript;
 
-
-  voiceBtn.addEventListener(
-    "click",
-    () => {
-
-      if (!recognition) return;
-
-
-      if (isListening) {
-
-        recognition.stop();
-
-        return;
       }
 
-
-      /*
-      Stop any previous answer speech
-      before recording a new question.
-      */
-
-      stopAnswerSpeech();
-
-
-      try {
-
-        recognition.start();
-
-      } catch (error) {
-
-        console.warn(
-          "Voice start error:",
-          error
-        );
-      }
     }
-  );
+
+    if (questionInput) {
+
+      questionInput.value =
+        (finalText || interimText).trim();
+
+    }
+
+  };
+
+
+  recognition.onerror = event => {
+
+    console.error(
+      "Voice error:",
+      event.error
+    );
+
+    isVoiceQuestion = false;
+
+    setVoiceStatus(
+      "Voice error: " + event.error
+    );
+
+  };
+
+
+  recognition.onend = () => {
+
+    isListening = false;
+
+    voiceBtn.classList.remove("voice-active");
+
+    voiceBtn.classList.remove("listening");
+
+    voiceBtn.textContent = "🎤 Voice AI";
+
+    if (
+      questionInput &&
+      questionInput.value.trim()
+    ) {
+
+      setVoiceStatus("Voice input ready.");
+
+    } else {
+
+      setVoiceStatus("");
+
+    }
+
+  };
+
+
+  voiceBtn.addEventListener("click", () => {
+
+    if (!recognition) return;
+
+    if (isListening) {
+
+      recognition.stop();
+
+      return;
+
+    }
+
+    stopAnswerSpeech();
+
+    try {
+
+      recognition.start();
+
+    } catch (error) {
+
+      console.warn(
+        "Voice start error:",
+        error
+      );
+
+    }
+
+  });
+
 }
 
 
@@ -4888,25 +4183,23 @@ TEXT TO SPEECH
 
 function speakText(text) {
 
-  if (
-    !("speechSynthesis" in window)
-  ) {
+  if (!voiceOutputEnabled) {
+    return;
+  }
+
+  if (!("speechSynthesis" in window)) {
     return;
   }
 
   if (!text) return;
 
-
   speakAnswerAsTeacher(
     text,
     {
-      calculation:
-        isCalculationContent(
-          "",
-          text
-        )
+      calculation: isCalculationContent("", text)
     }
   );
+
 }
 
 
@@ -4919,9 +4212,7 @@ LANGUAGE
 function detectLanguage(text) {
 
   const value =
-    String(text || "")
-      .toLowerCase();
-
+    String(text || "").toLowerCase();
 
   const words = [
 
@@ -4943,23 +4234,20 @@ function detectLanguage(text) {
 
   ];
 
-
   let matches = 0;
-
 
   words.forEach(word => {
 
-    if (
-      value.includes(word)
-    ) {
+    if (value.includes(word)) {
       matches++;
     }
-  });
 
+  });
 
   return matches >= 1
     ? "rw-RW"
     : "en-US";
+
 }
 
 
@@ -4988,7 +4276,9 @@ async function checkBackendHealth() {
       success: false,
       error: error.message
     };
+
   }
+
 }
 
 
@@ -5017,7 +4307,9 @@ async function getBackendModels() {
       success: false,
       error: error.message
     };
+
   }
+
 }
 
 
@@ -5034,63 +4326,46 @@ async function analyzeImage(
 
   if (!currentUser) {
 
-    throw new Error(
-      "Please login first."
-    );
-  }
+    throw new Error("Please login first.");
 
+  }
 
   if (!imageFile) {
 
-    throw new Error(
-      "No image selected."
-    );
+    throw new Error("No image selected.");
+
   }
 
-
   const base64 =
-    await fileToBase64(
-      imageFile
-    );
-
+    await fileToBase64(imageFile);
 
   const response =
     await callRwandaAI({
 
-      action:
-        "vision",
+      action: "vision",
 
-      userId:
-        currentUser.uid,
+      userId: currentUser.uid,
 
-      question:
-        question,
+      question: question,
 
-      image:
-        base64,
+      image: base64,
 
-      conversationId:
-        currentConversationId,
+      conversationId: currentConversationId,
 
-      conversationMessages:
-        conversationMessages,
+      conversationMessages: conversationMessages,
 
-      memories:
-        userMemories
+      memories: userMemories
+
     });
 
-
-  if (
-    response &&
-    response.success === false
-  ) {
+  if (response && response.success === false) {
 
     throw new Error(
       response.error ||
       "Image analysis failed."
     );
-  }
 
+  }
 
   const answer =
     response.answer ||
@@ -5098,10 +4373,8 @@ async function analyzeImage(
     response.text ||
     "No image analysis result.";
 
+  return cleanAIAnswer(answer);
 
-  return cleanAIAnswer(
-    answer
-  );
 }
 
 
@@ -5113,34 +4386,29 @@ FILE TO BASE64
 
 function fileToBase64(file) {
 
-  return new Promise(
-    (resolve, reject) => {
+  return new Promise((resolve, reject) => {
 
-      const reader =
-        new FileReader();
+    const reader =
+      new FileReader();
 
+    reader.onload = () => {
 
-      reader.onload =
-        () =>
-          resolve(
-            reader.result
-          );
+      resolve(reader.result);
 
+    };
 
-      reader.onerror =
-        () =>
-          reject(
-            new Error(
-              "Could not read image."
-            )
-          );
+    reader.onerror = () => {
 
-
-      reader.readAsDataURL(
-        file
+      reject(
+        new Error("Could not read image.")
       );
-    }
-  );
+
+    };
+
+    reader.readAsDataURL(file);
+
+  });
+
 }
 
 
@@ -5150,30 +4418,25 @@ PWA INSTALL NOTIFICATION
 ==========================================================
 */
 
-window.addEventListener(
-  "beforeinstallprompt",
-  event => {
+window.addEventListener("beforeinstallprompt", event => {
 
-    event.preventDefault();
+  event.preventDefault();
 
-    deferredInstallPrompt =
-      event;
+  deferredInstallPrompt = event;
 
-    showInstallNotification();
-  }
-);
+  showInstallNotification();
+
+});
 
 
 function showInstallNotification() {
 
   if (!installNotification) return;
 
-  installNotification.style.display =
-    "";
+  installNotification.style.display = "";
 
-  installNotification.classList.add(
-    "show"
-  );
+  installNotification.classList.add("show");
+
 }
 
 
@@ -5181,74 +4444,63 @@ function hideInstallNotification() {
 
   if (!installNotification) return;
 
-  installNotification.classList.remove(
-    "show"
-  );
+  installNotification.classList.remove("show");
 
-  setTimeout(
-    () => {
+  setTimeout(() => {
 
-      if (
-        !installNotification.classList.contains(
-          "show"
-        )
-      ) {
+    if (
+      !installNotification.classList.contains("show")
+    ) {
 
-        installNotification.style.display =
-          "none";
-      }
+      installNotification.style.display = "none";
 
-    },
-    400
-  );
+    }
+
+  }, 400);
+
 }
 
 
 if (installNotification) {
 
-  installNotification.addEventListener(
-    "click",
-    async () => {
+  installNotification.addEventListener("click", async () => {
 
-      if (!deferredInstallPrompt) {
-        return;
-      }
+    if (!deferredInstallPrompt) return;
 
+    try {
 
-      try {
+      deferredInstallPrompt.prompt();
 
-        deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
 
-        await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
 
-        deferredInstallPrompt =
-          null;
+      hideInstallNotification();
 
-        hideInstallNotification();
+    } catch (error) {
 
-      } catch (error) {
+      console.warn(
+        "Install prompt error:",
+        error
+      );
 
-        console.warn(
-          "Install prompt error:",
-          error
-        );
-      }
     }
-  );
+
+  });
+
 }
 
 
 if (installNotificationClose) {
 
-  installNotificationClose.addEventListener(
-    "click",
-    event => {
+  installNotificationClose.addEventListener("click", event => {
 
-      event.stopPropagation();
+    event.stopPropagation();
 
-      hideInstallNotification();
-    }
-  );
+    hideInstallNotification();
+
+  });
+
 }
 
 
@@ -5262,77 +4514,57 @@ function getTimestampMillis(timestamp) {
 
   if (!timestamp) return 0;
 
-
-  if (
-    typeof timestamp.toMillis ===
-    "function"
-  ) {
+  if (typeof timestamp.toMillis === "function") {
 
     return timestamp.toMillis();
+
   }
 
-
-  if (
-    timestamp instanceof Date
-  ) {
+  if (timestamp instanceof Date) {
 
     return timestamp.getTime();
+
   }
 
+  if (timestamp.seconds !== undefined) {
 
-  if (
-    timestamp.seconds !== undefined
-  ) {
+    return Number(timestamp.seconds) * 1000;
 
-    return Number(
-      timestamp.seconds
-    ) * 1000;
   }
 
-
-  if (
-    typeof timestamp === "number"
-  ) {
+  if (typeof timestamp === "number") {
 
     return timestamp;
+
   }
 
-
   const parsed =
-    Date.parse(
-      String(timestamp)
-    );
+    Date.parse(String(timestamp));
 
+  return isNaN(parsed) ? 0 : parsed;
 
-  return isNaN(parsed)
-    ? 0
-    : parsed;
 }
 
 
 function formatDate(timestamp) {
 
   const milliseconds =
-    getTimestampMillis(
-      timestamp
-    );
-
+    getTimestampMillis(timestamp);
 
   if (!milliseconds) {
     return "Date unavailable";
   }
 
-
   try {
 
-    return new Date(
-      milliseconds
-    ).toLocaleString();
+    return new Date(milliseconds).toLocaleString();
 
   } catch (error) {
 
     return "Date unavailable";
+
   }
+
 }
 
 
@@ -5349,98 +4581,70 @@ function getFriendlyError(error) {
       ? String(error.message)
       : "Unknown error";
 
+  console.error("Original error:", message);
 
-  console.error(
-    "Original error:",
-    message
-  );
-
-
-  if (
-    message.includes(
-      "Failed to fetch"
-    )
-  ) {
+  if (message.includes("Failed to fetch")) {
 
     return (
       "Rwanda AI backend cannot be reached. " +
       "Check the Apps Script Web App deployment and internet connection."
     );
+
   }
 
-
-  if (
-    message.includes(
-      "Backend returned invalid JSON"
-    )
-  ) {
+  if (message.includes("Backend returned invalid JSON")) {
 
     return (
       "The Rwanda AI backend returned an invalid response. " +
       "Check the Apps Script deployment."
     );
+
   }
 
-
-  if (
-    message.includes(
-      "HTTP 401"
-    )
-  ) {
+  if (message.includes("HTTP 401")) {
 
     return (
       "Rwanda AI backend authentication failed. " +
       "Check the Groq API key in Apps Script."
     );
+
   }
 
-
-  if (
-    message.includes(
-      "HTTP 403"
-    )
-  ) {
+  if (message.includes("HTTP 403")) {
 
     return (
       "Rwanda AI backend access was denied. " +
       "Check the Web App deployment permissions."
     );
+
   }
 
-
-  if (
-    message.includes(
-      "HTTP 429"
-    )
-  ) {
+  if (message.includes("HTTP 429")) {
 
     return (
       "Rwanda AI is temporarily rate-limited. " +
       "Please try again shortly."
     );
+
   }
 
-
   if (
-    message.includes(
-      "permission-denied"
-    ) ||
-    message.includes(
-      "Missing or insufficient permissions"
-    )
+    message.includes("permission-denied") ||
+    message.includes("Missing or insufficient permissions")
   ) {
 
     return (
       "Firebase permission denied. " +
       "Check your Firestore security rules."
     );
-  }
 
+  }
 
   return (
     "Rwanda AI could not complete the request. " +
     "Please try again."
   );
+
 }
 
 
@@ -5459,6 +4663,7 @@ window.RwandaAI = {
     if (newChatBtn) {
       newChatBtn.click();
     }
+
   },
 
   loadPastConversations,
@@ -5493,20 +4698,22 @@ window.RwandaAI = {
 
   isCalculationContent,
 
-  getCurrentUser: () =>
-    currentUser,
+  setVoiceOutputEnabled,
+
+  getVoiceOutputEnabled: () => voiceOutputEnabled,
+
+  getCurrentUser: () => currentUser,
 
   getConversation: () => ({
 
-    id:
-      currentConversationId,
+    id: currentConversationId,
 
-    title:
-      currentConversationTitle,
+    title: currentConversationTitle,
 
-    messages:
-      conversationMessages
+    messages: conversationMessages
+
   })
+
 };
 
 
@@ -5519,6 +4726,8 @@ INITIALIZATION
 initializeStickerButtons();
 
 initializeVoiceAI();
+
+initializeVoiceOutputButton();
 
 
 console.log(
@@ -5538,6 +4747,10 @@ console.log(
 );
 
 console.log(
+  "Calculations without theoretical explanations: ENABLED"
+);
+
+console.log(
   "Past conversation categories: ENABLED"
 );
 
@@ -5550,15 +4763,32 @@ console.log(
 );
 
 console.log(
-  "Voice Auto Read: ENABLED"
+  "Voice Auto Read: VOICE QUESTIONS ONLY"
 );
 
 console.log(
-  "Calculation Teacher Voice: ENABLED"
+  "Voice Output Toggle: ENABLED"
 );
 
 console.log(
-  "Speech Synchronized Auto Scroll: ENABLED"
+  "Voice Output:",
+  voiceOutputEnabled ? "ON" : "OFF"
+);
+
+console.log(
+  "Typing Auto Read: DISABLED"
+);
+
+console.log(
+  "Automatic Answer Scrolling: DISABLED"
+);
+
+console.log(
+  "Calculation Teacher Voice: VOICE QUESTIONS ONLY"
+);
+
+console.log(
+  "Speech Highlight: ENABLED WITHOUT AUTO SCROLL"
 );
 
 console.log(
